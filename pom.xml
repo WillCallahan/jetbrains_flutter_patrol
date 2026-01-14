@@ -13,11 +13,23 @@
 
   <properties>
     <java.version>11</java.version>
-    <intellij.version>2023.1</intellij.version>
+    <intellij.version>2023.1.7</intellij.version>
     <intellij.pluginName>Patrol Flutter</intellij.pluginName>
     <intellij.plugins>io.flutter</intellij.plugins>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <idea.unpacked.dir>${project.build.directory}/idea</idea.unpacked.dir>
+    <idea.lib.dir>${idea.unpacked.dir}/lib</idea.lib.dir>
   </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.jetbrains.intellij.idea</groupId>
+      <artifactId>ideaIC</artifactId>
+      <version>${intellij.version}</version>
+      <type>zip</type>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
@@ -28,18 +40,69 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <fork>true</fork>
+          <compilerArgs>
+            <arg>-classpath</arg>
+            <arg>${idea.classpath}</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.jetbrains.intellij</groupId>
-        <artifactId>intellij-maven-plugin</artifactId>
-        <version>1.16.0</version>
-        <configuration>
-          <intellijVersion>${intellij.version}</intellijVersion>
-          <pluginName>${intellij.pluginName}</pluginName>
-          <plugins>${intellij.plugins}</plugins>
-        </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <id>unpack-idea</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.jetbrains.intellij.idea</groupId>
+                  <artifactId>ideaIC</artifactId>
+                  <version>${intellij.version}</version>
+                  <type>zip</type>
+                  <outputDirectory>${idea.unpacked.dir}</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>build-idea-classpath</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <exportAntProperties>true</exportAntProperties>
+              <target>
+                <path id="idea.classpath">
+                  <fileset dir="${idea.lib.dir}" includes="**/*.jar"/>
+                </path>
+                <pathconvert property="idea.classpath" refid="idea.classpath" pathsep="${path.separator}"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
+
+  <repositories>
+    <repository>
+      <id>jetbrains-intellij-releases</id>
+      <url>https://cache-redirector.jetbrains.com/intellij-repository/releases</url>
+    </repository>
+  </repositories>
+
 </project>
