@@ -150,6 +150,13 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
 - Provide a diagnostic mode that increases log verbosity
 - Ensure logs avoid sensitive values by default
 
+### Repository Hygiene
+- Provide a `.gitignore` that excludes:
+  - IDE metadata (`.idea/`, `*.iml`)
+  - Build output (`target/`, `out/`)
+  - JetBrains sandbox/system dirs (`idea-sandbox/`, `system/`)
+  - OS artifacts (`.DS_Store`, `Thumbs.db`)
+
 ### Compatibility & Upgrades
 - Detect incompatible Patrol CLI versions and warn with upgrade guidance
 - Backward-compatible handling of CLI output changes where feasible
