@@ -38,7 +38,11 @@ public final class PatrolCommandLineState extends CommandLineState {
 
     com.intellij.execution.configurations.GeneralCommandLine commandLine =
         new com.intellij.execution.configurations.GeneralCommandLine(cliPath.toString());
-    commandLine.addParameter("test");
+    if (configuration.getCommandMode() == PatrolCommandMode.DEVELOP) {
+      commandLine.addParameter("develop");
+    } else {
+      commandLine.addParameter("test");
+    }
     commandLine.addParameter(configuration.getTarget());
 
     List<String> extraArgs = ParametersListUtil.parse(configuration.getCliArgs());

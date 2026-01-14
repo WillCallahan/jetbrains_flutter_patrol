@@ -12,6 +12,7 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
   - Allow target device selection (iOS simulator, Android emulator, physical devices)
   - Configuration options for:
     - Test target specification
+    - Command mode: `develop` (watch for changes) or `test` (single run)
     - Custom Patrol CLI arguments
     - Environment variables
     - Working directory override
@@ -163,6 +164,9 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
 ### Compatibility & Upgrades
 - Detect incompatible Patrol CLI versions and warn with upgrade guidance
 - Backward-compatible handling of CLI output changes where feasible
+
+### Branding
+- Use the Patrol icon for the plugin metadata displayed in IntelliJ
 
 ## Success Metrics
 - Developers can run Patrol tests without switching to terminal

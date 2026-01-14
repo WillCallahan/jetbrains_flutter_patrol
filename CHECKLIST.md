@@ -66,6 +66,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [~] Diagnostic mode for verbose logs
 - [ ] Unit tests for output parsing
 - [ ] Integration tests for run configuration lifecycle
+- [x] Plugin icon metadata
 
 ## Repository Hygiene
 - [x] `.gitignore` covering IDE/build/sandbox/OS artifacts

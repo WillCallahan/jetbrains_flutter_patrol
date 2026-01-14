@@ -1,6 +1,7 @@
 <idea-plugin>
   <id>com.patrol.jetbrains</id>
   <name>Patrol Flutter</name>
+  <icon>/META-INF/pluginIcon.svg</icon>
   <vendor email="support@patrol.dev" url="https://patrol.dev">Patrol</vendor>
 
   <description>
