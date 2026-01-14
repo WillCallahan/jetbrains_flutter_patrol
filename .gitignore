@@ -1,0 +1,15 @@
+# IDE
+.idea/
+*.iml
+
+# Build output
+target/
+out/
+
+# JetBrains sandbox/system
+idea-sandbox/
+system/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

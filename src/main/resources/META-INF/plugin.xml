@@ -1,0 +1,23 @@
+<idea-plugin>
+  <id>com.patrol.jetbrains</id>
+  <name>Patrol Flutter</name>
+  <vendor email="support@patrol.dev" url="https://patrol.dev">Patrol</vendor>
+
+  <description>
+    Run and debug Patrol Flutter tests from JetBrains IDEs.
+  </description>
+
+  <idea-version since-build="231"/>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>io.flutter</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <configurationType implementation="com.patrol.jetbrains.run.PatrolRunConfigurationType"/>
+    <runConfigurationProducer implementation="com.patrol.jetbrains.run.PatrolRunConfigurationProducer"/>
+    <runLineMarkerContributor implementation="com.patrol.jetbrains.run.PatrolRunLineMarkerContributor"/>
+    <notificationGroup id="Patrol"
+                       displayType="BALLOON"
+                       isLogByDefault="true"/>
+  </extensions>
+</idea-plugin>

@@ -20,6 +20,7 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
   - Individual `patrolTest()` declarations
   - Test groups
   - Test files
+  - Use the Patrol icon from https://patrol.leancode.co/_next/static/media/patrol_icon.94a710ce.svg
 
 - **Run Actions**: 
   - Run single test
@@ -149,6 +150,8 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
 - Use JetBrains logging APIs
 - Provide a diagnostic mode that increases log verbosity
 - Ensure logs avoid sensitive values by default
+- Diagnostic mode must never log environment variables
+- Diagnostic mode should log the resolved CLI path, working directory, and exit code
 
 ### Repository Hygiene
 - Provide a `.gitignore` that excludes:
