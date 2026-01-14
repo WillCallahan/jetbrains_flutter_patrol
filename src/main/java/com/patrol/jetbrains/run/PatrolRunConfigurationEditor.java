@@ -6,13 +6,13 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBComboBox;
 import com.intellij.util.ui.FormBuilder;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.cli.PatrolCliVersionChecker;
 import com.patrol.jetbrains.cli.SemanticVersion;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -28,8 +28,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final JBTextField workingDirField = new JBTextField();
   private final JBTextField cliPathField = new JBTextField();
   private final JBTextField resolvedCliField = new JBTextField();
-  private final JBComboBox<PatrolCommandMode> commandModeBox =
-      new JBComboBox<>(PatrolCommandMode.values());
+  private final JComboBox<PatrolCommandMode> commandModeBox =
+      new JComboBox<>(PatrolCommandMode.values());
   private final JBCheckBox diagnosticCheckBox = new JBCheckBox("Enable diagnostic logging");
   private final EnvironmentVariablesComponent envComponent = new EnvironmentVariablesComponent();
   private final AtomicLong resolveRequestId = new AtomicLong();
