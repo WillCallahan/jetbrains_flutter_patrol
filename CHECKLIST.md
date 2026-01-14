@@ -8,6 +8,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [ ] Run single test / file / directory
 - [ ] Debug mode with breakpoints
 - [~] Gutter icons for patrolTest(), groups, files
+- [x] Command mode: develop (watch) and test (single run)
 - [ ] Hot reload integration (auto + manual)
 - [ ] Reload status feedback (console, status bar)
 - [ ] Test results in JetBrains test runner format
@@ -64,6 +65,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] Configurable working directory
 - [x] JetBrains logging APIs
 - [~] Diagnostic mode for verbose logs
+- [x] Show detected Patrol CLI version in UI
 - [ ] Unit tests for output parsing
 - [ ] Integration tests for run configuration lifecycle
 - [x] Plugin icon metadata

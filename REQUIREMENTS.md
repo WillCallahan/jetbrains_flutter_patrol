@@ -16,6 +16,7 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
     - Custom Patrol CLI arguments
     - Environment variables
     - Working directory override
+    - Display detected Patrol CLI version when CLI path is not set
 
 - **Gutter Icons**: Display run/debug icons in the editor gutter next to:
   - Individual `patrolTest()` declarations
@@ -141,6 +142,7 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
   3. Fallback detection with a clear error if missing
 - Capture stdout/stderr separately for structured parsing
 - Support configurable working directory per run configuration
+- Show detected Patrol CLI version in the run configuration UI when not overridden
 
 ### Testing
 - Unit tests for parsing Patrol output into the test runner model
