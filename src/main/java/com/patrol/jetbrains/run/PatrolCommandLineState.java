@@ -51,6 +51,7 @@ public final class PatrolCommandLineState extends CommandLineState {
       commandLine.addParameter("--device");
       commandLine.addParameter(device);
     }
+    commandLine.addParameter("--target");
     commandLine.addParameter(configuration.getTarget());
     addOptionParameters(commandLine);
 
@@ -115,16 +116,60 @@ public final class PatrolCommandLineState extends CommandLineState {
     String configured = configuration.getDevice();
     com.intellij.execution.ExecutionTarget target = getEnvironment().getExecutionTarget();
     if (target != null) {
-      String id = target.getId();
+      String id = extractDeviceId(target.getId());
       if (!StringUtil.isEmptyOrSpaces(id) && !"default".equalsIgnoreCase(id)) {
         return id;
       }
-      String name = target.getDisplayName();
+      String name = extractDeviceId(target.getDisplayName());
       if (!StringUtil.isEmptyOrSpaces(name)) {
-        return name.trim();
+        return name;
       }
     }
     return configured == null ? "" : configured.trim();
+  }
+
+  private String extractDeviceId(String raw) {
+    if (StringUtil.isEmptyOrSpaces(raw)) {
+      return "";
+    }
+    String value = raw.trim();
+    String extracted = extractIdentifier(value);
+    if (!StringUtil.isEmptyOrSpaces(extracted)) {
+      value = extracted;
+    }
+    if (value.startsWith("path=")) {
+      String pathValue = value.substring("path=".length());
+      int slash = Math.max(pathValue.lastIndexOf('/'), pathValue.lastIndexOf('\\'));
+      String name = slash >= 0 ? pathValue.substring(slash + 1) : pathValue;
+      if (name.endsWith(".avd")) {
+        name = name.substring(0, name.length() - ".avd".length());
+      }
+      return name.trim();
+    }
+    if (value.contains("DeviceId(")) {
+      String inner = extractIdentifier(value);
+      if (!StringUtil.isEmptyOrSpaces(inner)) {
+        return inner;
+      }
+    }
+    return value;
+  }
+
+  private String extractIdentifier(String value) {
+    int idx = value.indexOf("identifier=");
+    if (idx < 0) {
+      return "";
+    }
+    String tail = value.substring(idx + "identifier=".length());
+    int end = tail.indexOf(')');
+    if (end < 0) {
+      end = tail.indexOf(']');
+    }
+    if (end < 0) {
+      end = tail.indexOf(',');
+    }
+    String extracted = end >= 0 ? tail.substring(0, end) : tail;
+    return extracted.trim();
   }
 
   private void addOptionParameters(@NotNull com.intellij.execution.configurations.GeneralCommandLine commandLine) {
