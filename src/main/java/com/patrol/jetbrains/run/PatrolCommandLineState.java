@@ -8,9 +8,14 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.icons.AllIcons;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.PatrolNotifications;
 import com.patrol.jetbrains.cli.PatrolCliVersionChecker;
@@ -19,6 +24,8 @@ import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +82,30 @@ public final class PatrolCommandLineState extends CommandLineState {
     }
     ProcessTerminatedListener.attach(handler);
     return handler;
+  }
+
+  @Override
+  protected AnAction[] createActions(ConsoleView console, ProcessHandler processHandler) {
+    AnAction[] base = super.createActions(console, processHandler);
+    if (configuration.getCommandMode() != PatrolCommandMode.DEVELOP) {
+      return base;
+    }
+    AnAction hotReload = new AnAction("Hot Reload", "Trigger Patrol hot reload", AllIcons.Actions.Refresh) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        triggerHotReload(processHandler);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent event) {
+        Presentation presentation = event.getPresentation();
+        presentation.setEnabled(processHandler.isProcessTerminated() == false);
+      }
+    };
+    AnAction[] combined = new AnAction[base.length + 1];
+    System.arraycopy(base, 0, combined, 0, base.length);
+    combined[base.length] = hotReload;
+    return combined;
   }
 
   private Path resolveCliPath() throws ExecutionException {
@@ -276,5 +307,18 @@ public final class PatrolCommandLineState extends CommandLineState {
         LOG.info("Patrol process exited with code " + event.getExitCode());
       }
     });
+  }
+
+  private void triggerHotReload(@NotNull ProcessHandler handler) {
+    OutputStream input = handler.getProcessInput();
+    if (input == null) {
+      return;
+    }
+    try {
+      input.write("r\n".getBytes(StandardCharsets.UTF_8));
+      input.flush();
+    } catch (Exception e) {
+      LOG.warn("Failed to trigger hot reload", e);
+    }
   }
 }

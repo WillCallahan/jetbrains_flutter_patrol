@@ -59,7 +59,7 @@
 - [ ] **Automatic Hot Reload**: Trigger Patrol hot reload when:
   - [ ] User saves a file (configurable)
   - [ ] File changes are detected during active test session
-- [ ] **Manual Hot Reload**: Keyboard shortcut and toolbar button
+- [x] **Manual Hot Reload**: Toolbar button in the Run tool window
 - [ ] **Reload Feedback**: Display reload status in:
   - [ ] Run tool window console
   - [ ] Status bar notification
