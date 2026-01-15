@@ -35,6 +35,7 @@
   - [ ] Run all tests in file
   - [ ] Run all tests in directory
   - [ ] Debug mode support with breakpoints
+  - [x] Context menu shows Patrol Test and Patrol Debug entries
 
 ### 1.1 Test Discovery Rules
 - [ ] **Default Discovery**:

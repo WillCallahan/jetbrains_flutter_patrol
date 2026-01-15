@@ -8,6 +8,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [ ] Run single test / file / directory
 - [ ] Debug mode with breakpoints
 - [~] Gutter icons for patrolTest(), groups, files
+- [x] Context menu includes Patrol Debug config
 - [x] Command mode: develop (watch) and test (single run)
 - [x] Device selection from IDE device selector passed to Patrol CLI
 - [x] Modify options for Patrol CLI flags
