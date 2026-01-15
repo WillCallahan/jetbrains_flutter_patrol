@@ -221,7 +221,10 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.setBorder(JBUI.Borders.emptyBottom(6));
-    panel.add(new com.intellij.ui.components.JBLabel(label));
+    JBLabel labelComponent = new JBLabel(label);
+    labelComponent.setAlignmentX(0f);
+    field.setAlignmentX(0f);
+    panel.add(labelComponent);
     panel.add(field);
     return panel;
   }
