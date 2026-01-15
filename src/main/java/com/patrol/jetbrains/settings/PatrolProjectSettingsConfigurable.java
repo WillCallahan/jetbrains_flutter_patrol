@@ -73,7 +73,7 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     );
 
     pubspecValueLabel = new JBLabel();
-    openPubspecLink = new ActionLink("Open pubspec.yaml", event -> openPubspec());
+    openPubspecLink = new ActionLink("Open pubspec.yaml", (java.awt.event.ActionListener) event -> openPubspec());
 
     pubspecWarningLabel = new JBLabel();
     pubspecWarningLabel.setForeground(JBColor.RED);
