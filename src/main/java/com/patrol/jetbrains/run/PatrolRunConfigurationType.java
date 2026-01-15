@@ -9,7 +9,8 @@ public final class PatrolRunConfigurationType extends ConfigurationTypeBase {
 
   public PatrolRunConfigurationType() {
     super(ID, "Patrol Test", "Run Patrol Flutter tests", AllIcons.RunConfigurations.Junit);
-    addFactory(new PatrolRunConfigurationFactory(this));
+    addFactory(new PatrolRunConfigurationFactory(this, "Patrol Test", PatrolCommandMode.TEST));
+    addFactory(new PatrolRunConfigurationFactory(this, "Patrol Develop", PatrolCommandMode.DEVELOP));
   }
 
   @NotNull
