@@ -282,7 +282,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.setBorder(JBUI.Borders.empty(8));
+    panel.setBorder(JBUI.Borders.empty(8, 0, 8, 8));
     addOptionsGroup(panel, mode, "Build",
         List.of(PatrolRunOption.DEBUG, PatrolRunOption.PROFILE, PatrolRunOption.RELEASE));
     addOptionsGroup(panel, mode, "Targets",
@@ -361,12 +361,14 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JBLabel label = new JBLabel(text);
     label.setBorder(JBUI.Borders.empty(6, 0, 4, 0));
     label.setFont(label.getFont().deriveFont(Font.BOLD));
+    label.setAlignmentX(0f);
     return label;
   }
 
   private @Nullable CheckBoxList<PatrolRunOption> createOptionsList(@NotNull PatrolCommandMode mode,
                                                                     @NotNull List<PatrolRunOption> options) {
     CheckBoxList<PatrolRunOption> list = new CheckBoxList<>();
+    list.setAlignmentX(0f);
     List<PatrolRunOption> visibleOptions = new ArrayList<>();
     for (PatrolRunOption option : options) {
       if (option.appliesTo(mode)) {
