@@ -157,6 +157,10 @@ public final class PatrolCommandLineState extends CommandLineState {
       }
       String name = extractDeviceId(target.getDisplayName());
       if (!StringUtil.isEmptyOrSpaces(name)) {
+        String resolved = FlutterDaemonDeviceResolver.resolveDeviceIdByName(name);
+        if (!StringUtil.isEmptyOrSpaces(resolved)) {
+          return resolved;
+        }
         return name;
       }
     }
@@ -168,6 +172,10 @@ public final class PatrolCommandLineState extends CommandLineState {
       return "";
     }
     String value = raw.trim();
+    String direct = extractExplicitDeviceId(value);
+    if (!StringUtil.isEmptyOrSpaces(direct)) {
+      return direct;
+    }
     String extracted = extractIdentifier(value);
     if (!StringUtil.isEmptyOrSpaces(extracted)) {
       value = extracted;
@@ -188,6 +196,21 @@ public final class PatrolCommandLineState extends CommandLineState {
       }
     }
     return value;
+  }
+
+  private String extractExplicitDeviceId(String value) {
+    java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(emulator-\\d+|[a-zA-Z0-9_-]+)")
+        .matcher(value);
+    while (matcher.find()) {
+      String candidate = matcher.group(1);
+      if (candidate.startsWith("emulator-")) {
+        return candidate;
+      }
+      if (candidate.startsWith("device-")) {
+        return candidate;
+      }
+    }
+    return "";
   }
 
   private String extractIdentifier(String value) {
