@@ -72,7 +72,7 @@
 
 ### 4. Project Detection & Setup
 - [ ] **Auto-detection**: Identify Patrol-enabled Flutter projects by:
-  - [ ] Presence of `patrol` dependency in `pubspec.yaml`
+  - [x] Presence of `patrol` in `dependencies` or `dev_dependencies` in `pubspec.yaml`
   - [ ] Existence of `integration_test/` or test directories with Patrol tests
 - [ ] **Setup Wizard**: Guide users through:
   - [ ] Installing Patrol CLI if not present
@@ -83,6 +83,7 @@
 
 ### 5. IDE Settings
 - [x] **Patrol Settings Page**: Provide a plugin settings page under IDE Settings
+- [x] **Settings Placement**: Single top-level Patrol entry under Languages & Frameworks
 - [x] **CLI Default Path**: Allow configuring a default Patrol CLI path at the IDE level
   - [x] Used as the baseline for new Run/Debug configurations
   - [x] Run configuration override takes precedence when set

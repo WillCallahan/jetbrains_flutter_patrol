@@ -13,7 +13,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [ ] Reload status feedback (console, status bar)
 - [ ] Test results in JetBrains test runner format
 - [ ] Click-to-navigate for failures
-- [ ] Project auto-detection
+- [~] Project auto-detection
 - [ ] Setup wizard
 - [ ] Version checks at setup
 
@@ -63,6 +63,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] CLI path resolution (override + PATH)
 - [x] IDE settings (default CLI path + test root configuration)
 - [x] Pubspec `patrol.test_directory` warning in settings
+- [x] Settings grouped under Languages & Frameworks
 - [ ] CLI stdout/stderr separation
 - [x] Configurable working directory
 - [x] JetBrains logging APIs

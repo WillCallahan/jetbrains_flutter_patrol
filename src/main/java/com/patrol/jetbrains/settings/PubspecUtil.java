@@ -27,6 +27,20 @@ public final class PubspecUtil {
     }
   }
 
+  public static boolean hasPatrolDependency(@NotNull Project project) {
+    Path pubspec = resolvePubspecPath(project);
+    if (pubspec == null || !Files.isRegularFile(pubspec)) {
+      return false;
+    }
+
+    try {
+      String content = Files.readString(pubspec);
+      return hasPatrolDependency(content);
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
   public static @Nullable String validatePatrolTestDirectory(@NotNull Project project) {
     Optional<String> value = readPatrolTestDirectory(project);
     if (value.isEmpty()) {
@@ -80,6 +94,40 @@ public final class PubspecUtil {
     }
 
     return Optional.empty();
+  }
+
+  private static boolean hasPatrolDependency(@NotNull String content) {
+    String[] lines = content.split("\n");
+    boolean inDeps = false;
+    int depsIndent = -1;
+
+    for (String line : lines) {
+      String trimmedLine = line.replaceFirst("#.*$", "").trim();
+      if (trimmedLine.isEmpty()) {
+        continue;
+      }
+
+      int indent = countIndent(line);
+      if (!inDeps) {
+        if (trimmedLine.equals("dependencies:") || trimmedLine.equals("dev_dependencies:")) {
+          inDeps = true;
+          depsIndent = indent;
+        }
+        continue;
+      }
+
+      if (indent <= depsIndent) {
+        inDeps = false;
+        depsIndent = -1;
+        continue;
+      }
+
+      if (trimmedLine.startsWith("patrol:")) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static String unquote(@NotNull String value) {

@@ -25,6 +25,9 @@ public final class PatrolTestUtil {
     if (vFile == null) {
       return false;
     }
+    if (!PubspecUtil.hasPatrolDependency(file.getProject())) {
+      return false;
+    }
     return isPatrolTestPath(file.getProject(), vFile.getPath());
   }
 
