@@ -2,17 +2,15 @@ package com.patrol.jetbrains.run;
 
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.patrol.jetbrains.discovery.PatrolTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-
 public final class PatrolRunLineMarkerContributor extends RunLineMarkerContributor {
-  private static final Icon PATROL_ICON = IconLoader.getIcon("/icons/patrol.svg", PatrolRunLineMarkerContributor.class);
+  private static final javax.swing.Icon RUN_ICON = AllIcons.RunConfigurations.TestMark;
 
   @Override
   public @Nullable Info getInfo(@NotNull PsiElement element) {
@@ -22,7 +20,7 @@ public final class PatrolRunLineMarkerContributor extends RunLineMarkerContribut
     }
 
     if (isTargetElement(element)) {
-      return new Info(PATROL_ICON, ExecutorAction.getActions(0), e -> "Run Patrol Test");
+      return new Info(RUN_ICON, ExecutorAction.getActions(), e -> "Run Patrol Test");
     }
 
     return null;

@@ -18,6 +18,7 @@ import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import com.patrol.jetbrains.run.FlutterDaemonDeviceProvider.DeviceItem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
@@ -314,14 +315,13 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.setBorder(JBUI.Borders.empty(8));
-    panel.add(createGroupLabel("Build"));
-    panel.add(createOptionsList(mode, List.of(PatrolRunOption.DEBUG, PatrolRunOption.PROFILE, PatrolRunOption.RELEASE)));
-    panel.add(createGroupLabel("Targets"));
-    panel.add(createOptionsList(mode, List.of(PatrolRunOption.EXCLUDE, PatrolRunOption.TAGS, PatrolRunOption.EXCLUDE_TAGS)));
-    panel.add(createGroupLabel("Dart Defines"));
-    panel.add(createOptionsList(mode, List.of(PatrolRunOption.DART_DEFINE, PatrolRunOption.DART_DEFINE_FILE)));
-    panel.add(createGroupLabel("Execution"));
-    panel.add(createOptionsList(mode, List.of(
+    addOptionsGroup(panel, mode, "Build",
+        List.of(PatrolRunOption.DEBUG, PatrolRunOption.PROFILE, PatrolRunOption.RELEASE));
+    addOptionsGroup(panel, mode, "Targets",
+        List.of(PatrolRunOption.EXCLUDE, PatrolRunOption.TAGS, PatrolRunOption.EXCLUDE_TAGS));
+    addOptionsGroup(panel, mode, "Dart Defines",
+        List.of(PatrolRunOption.DART_DEFINE, PatrolRunOption.DART_DEFINE_FILE));
+    addOptionsGroup(panel, mode, "Execution", List.of(
         PatrolRunOption.GENERATE_BUNDLE,
         PatrolRunOption.LABEL,
         PatrolRunOption.TEST_SERVER_PORT,
@@ -331,30 +331,26 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         PatrolRunOption.CHECK_COMPATIBILITY,
         PatrolRunOption.UNINSTALL,
         PatrolRunOption.OPEN_DEVTOOLS
-    )));
-    panel.add(createGroupLabel("Build Metadata"));
-    panel.add(createOptionsList(mode, List.of(
+    ));
+    addOptionsGroup(panel, mode, "Build Metadata", List.of(
         PatrolRunOption.FLAVOR,
         PatrolRunOption.BUILD_NAME,
         PatrolRunOption.BUILD_NUMBER,
         PatrolRunOption.PACKAGE_NAME,
         PatrolRunOption.BUNDLE_ID
-    )));
-    panel.add(createGroupLabel("Coverage & Logs"));
-    panel.add(createOptionsList(mode, List.of(
+    ));
+    addOptionsGroup(panel, mode, "Coverage & Logs", List.of(
         PatrolRunOption.COVERAGE,
         PatrolRunOption.COVERAGE_IGNORE,
         PatrolRunOption.COVERAGE_PACKAGE,
         PatrolRunOption.SHOW_FLUTTER_LOGS
-    )));
-    panel.add(createGroupLabel("iOS Simulator"));
-    panel.add(createOptionsList(mode, List.of(
+    ));
+    addOptionsGroup(panel, mode, "iOS Simulator", List.of(
         PatrolRunOption.CLEAR_PERMISSIONS,
         PatrolRunOption.FULL_ISOLATION,
         PatrolRunOption.IOS_VERSION
-    )));
-    panel.add(createGroupLabel("Web"));
-    panel.add(createOptionsList(mode, List.of(
+    ));
+    addOptionsGroup(panel, mode, "Web", List.of(
         PatrolRunOption.WEB_RESULTS_DIR,
         PatrolRunOption.WEB_REPORT_DIR,
         PatrolRunOption.WEB_RETRIES,
@@ -372,13 +368,25 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         PatrolRunOption.WEB_GLOBAL_TIMEOUT,
         PatrolRunOption.WEB_SHARD,
         PatrolRunOption.WEB_HEADLESS
-    )));
+    ));
     com.intellij.openapi.ui.popup.JBPopup popup = com.intellij.openapi.ui.popup.JBPopupFactory.getInstance()
         .createComponentPopupBuilder(panel, panel)
         .setTitle("Add Run Options")
         .setRequestFocus(true)
         .createPopup();
     popup.showUnderneathOf(modifyOptionsLink);
+  }
+
+  private void addOptionsGroup(@NotNull JPanel panel,
+                               @NotNull PatrolCommandMode mode,
+                               @NotNull String title,
+                               @NotNull List<PatrolRunOption> options) {
+    CheckBoxList<PatrolRunOption> list = createOptionsList(mode, options);
+    if (list == null) {
+      return;
+    }
+    panel.add(createGroupLabel(title));
+    panel.add(list);
   }
 
   private JBLabel createGroupLabel(@NotNull String text) {
@@ -388,15 +396,17 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     return label;
   }
 
-  private CheckBoxList<PatrolRunOption> createOptionsList(@NotNull PatrolCommandMode mode,
-                                                          @NotNull List<PatrolRunOption> options) {
+  private @Nullable CheckBoxList<PatrolRunOption> createOptionsList(@NotNull PatrolCommandMode mode,
+                                                                    @NotNull List<PatrolRunOption> options) {
     CheckBoxList<PatrolRunOption> list = new CheckBoxList<>();
-    list.setBorder(JBUI.Borders.emptyLeft(8));
     List<PatrolRunOption> visibleOptions = new ArrayList<>();
     for (PatrolRunOption option : options) {
       if (option.appliesTo(mode)) {
         visibleOptions.add(option);
       }
+    }
+    if (visibleOptions.isEmpty()) {
+      return null;
     }
     for (PatrolRunOption option : visibleOptions) {
       list.addItem(option, option.getLabel(), optionEnabled.getOrDefault(option, Boolean.FALSE));

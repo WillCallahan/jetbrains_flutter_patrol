@@ -26,7 +26,7 @@
   - [ ] Individual `patrolTest()` declarations
   - [ ] Test groups
   - [ ] Test files
-  - [x] Use the Patrol icon from https://patrol.leancode.co/_next/static/media/patrol_icon.94a710ce.svg
+  - [x] Use the standard IntelliJ test run gutter icon
 
 - [ ] **Run Actions**: 
   - [ ] Run single test
