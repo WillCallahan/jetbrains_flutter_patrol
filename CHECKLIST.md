@@ -30,6 +30,7 @@ Legend: [x] done, [ ] pending, [~] partial
 
 ## Run/Debug Lifecycle
 - [ ] Stop/cancel with cleanup
+- [x] Single active Patrol run/debug instance
 - [ ] Rerun last test/session
 - [ ] Per-run timeout
 - [ ] Crash recovery with rerun prompt
@@ -73,6 +74,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [ ] Unit tests for output parsing
 - [ ] Integration tests for run configuration lifecycle
 - [x] Plugin icon metadata
+- [x] `patrol_test/` folder uses test folder icon
 
 ## Repository Hygiene
 - [x] `.gitignore` covering IDE/build/sandbox/OS artifacts

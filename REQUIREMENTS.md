@@ -44,6 +44,7 @@
 
 ### 1.3 Run/Debug Lifecycle
 - [ ] **Stop/Cancel**: Terminate Patrol CLI, detach from device, and clean up temp artifacts
+- [x] **Singleton Runs**: Only allow one Patrol run/debug session at a time
 - [ ] **Rerun**: Support rerun last test/session from Run tool window
 - [ ] **Timeouts**: Configurable overall timeout per run configuration
 - [ ] **Crash Recovery**: If the Patrol process crashes, surface a concise error and offer "Rerun"
@@ -193,6 +194,7 @@
 - [x] Use the Patrol icon for the plugin metadata displayed in IntelliJ
 - [x] Use the Patrol icon for Patrol run/debug configuration templates
 - [x] Use the Patrol icon on the Patrol CLI path selector control
+- [x] Use IntelliJ's standard test folder icon for `patrol_test/`
 
 ## Success Metrics
 - [ ] Developers can run Patrol tests without switching to terminal

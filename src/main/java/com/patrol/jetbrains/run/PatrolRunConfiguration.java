@@ -6,6 +6,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RunConfigurationSingletonPolicy;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -51,6 +52,11 @@ public final class PatrolRunConfiguration extends RunConfigurationBase<PatrolRun
   @Override
   public @NotNull PatrolRunConfigurationEditor getConfigurationEditor() {
     return new PatrolRunConfigurationEditor();
+  }
+
+  @Override
+  public @NotNull RunConfigurationSingletonPolicy getSingletonPolicy() {
+    return RunConfigurationSingletonPolicy.SINGLE_INSTANCE;
   }
 
   @Override
