@@ -127,10 +127,10 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         .addComponent(createWideFieldPanel("Patrol CLI args", argsField))
         .addLabeledComponent("Working directory", workingDirField)
         .addLabeledComponent("Patrol CLI path", cliPathField)
+        .addComponent(envComponent)
         .addComponent(modifyOptionsLink)
         .addComponent(optionsPanel)
         .addComponent(diagnosticCheckBox)
-        .addComponent(envComponent)
         .getPanel();
     return panel;
   }
