@@ -303,7 +303,7 @@ public final class PatrolCommandLineState extends CommandLineState {
 
   private List<String> splitMultiValue(@NotNull String rawValue) {
     List<String> values = new ArrayList<>();
-    for (String part : rawValue.split("[,\n]")) {
+    for (String part : rawValue.split("[,;\n]")) {
       String trimmed = part.trim();
       if (!trimmed.isEmpty()) {
         values.add(trimmed);

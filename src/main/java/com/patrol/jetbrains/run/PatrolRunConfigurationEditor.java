@@ -31,6 +31,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +50,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final Map<PatrolRunOption, JComponent> optionRows = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBCheckBox> optionToggleFields = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBTextField> optionValueFields = new EnumMap<>(PatrolRunOption.class);
+  private final Map<PatrolRunOption, EnvironmentVariablesComponent> optionEnvFields = new EnumMap<>(PatrolRunOption.class);
   private final JPanel optionsPanel = new JPanel();
   private final JSeparator optionsTopSeparator = new JSeparator();
   private final JSeparator optionsBottomSeparator = new JSeparator();
@@ -199,6 +201,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     optionRows.clear();
     optionToggleFields.clear();
     optionValueFields.clear();
+    optionEnvFields.clear();
 
     optionsTopSeparator.setAlignmentX(0f);
     optionsBottomSeparator.setAlignmentX(0f);
@@ -217,6 +220,11 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       JBCheckBox checkBox = new JBCheckBox(option.getLabel());
       optionToggleFields.put(option, checkBox);
       return checkBox;
+    }
+    if (option == PatrolRunOption.DART_DEFINE) {
+      EnvironmentVariablesComponent envComponent = new EnvironmentVariablesComponent();
+      optionEnvFields.put(option, envComponent);
+      return createFieldPanel(option.getLabel(), envComponent);
     }
     JBTextField field = new JBTextField();
     optionValueFields.put(option, field);
@@ -244,6 +252,11 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         if (checkBox != null) {
           checkBox.setSelected(value);
         }
+      } else if (option == PatrolRunOption.DART_DEFINE) {
+        EnvironmentVariablesComponent envComponent = optionEnvFields.get(option);
+        if (envComponent != null) {
+          envComponent.setEnvs(parseKeyValuePairs(configuration.getOptionValue(option)));
+        }
       } else {
         JBTextField field = optionValueFields.get(option);
         if (field != null) {
@@ -261,6 +274,10 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       if (option.getType() == PatrolRunOptionType.TOGGLE) {
         JBCheckBox checkBox = optionToggleFields.get(option);
         configuration.setOptionValue(option, checkBox != null && checkBox.isSelected() ? "true" : "false");
+      } else if (option == PatrolRunOption.DART_DEFINE) {
+        EnvironmentVariablesComponent envComponent = optionEnvFields.get(option);
+        String value = envComponent == null ? "" : stringifyKeyValuePairs(envComponent.getEnvs());
+        configuration.setOptionValue(option, value);
       } else {
         JBTextField field = optionValueFields.get(option);
         configuration.setOptionValue(option, field == null ? "" : field.getText().trim());
@@ -460,5 +477,40 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     if (field != null && field.getText().isEmpty()) {
       field.setText("");
     }
+  }
+
+  private Map<String, String> parseKeyValuePairs(@NotNull String value) {
+    Map<String, String> result = new LinkedHashMap<>();
+    if (value.isEmpty()) {
+      return result;
+    }
+    String[] entries = value.split(";");
+    for (String entry : entries) {
+      String trimmed = entry.trim();
+      if (trimmed.isEmpty()) {
+        continue;
+      }
+      int idx = trimmed.indexOf('=');
+      if (idx < 0) {
+        result.put(trimmed, "");
+      } else {
+        result.put(trimmed.substring(0, idx).trim(), trimmed.substring(idx + 1).trim());
+      }
+    }
+    return result;
+  }
+
+  private String stringifyKeyValuePairs(@NotNull Map<String, String> pairs) {
+    StringBuilder builder = new StringBuilder();
+    for (Map.Entry<String, String> entry : pairs.entrySet()) {
+      if (builder.length() > 0) {
+        builder.append(';');
+      }
+      builder.append(entry.getKey());
+      if (!entry.getValue().isEmpty()) {
+        builder.append('=').append(entry.getValue());
+      }
+    }
+    return builder.toString();
   }
 }
