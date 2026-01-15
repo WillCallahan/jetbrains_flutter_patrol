@@ -138,8 +138,9 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
 ### CLI Integration
 - Resolve Patrol CLI path via:
   1. Project settings override
-  2. PATH environment
-  3. Fallback detection with a clear error if missing
+  2. `~/.pub-cache/bin/patrol` when present
+  3. PATH environment
+  4. Fallback detection with a clear error if missing
 - Capture stdout/stderr separately for structured parsing
 - Support configurable working directory per run configuration
 - Show detected Patrol CLI version in the run configuration UI when not overridden

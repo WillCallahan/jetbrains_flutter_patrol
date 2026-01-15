@@ -18,6 +18,11 @@ public final class DefaultPatrolCliLocator implements PatrolCliLocator {
       return Optional.of(overridePath);
     }
 
+    Optional<Path> pubCache = resolvePubCacheCli();
+    if (pubCache.isPresent()) {
+      return pubCache;
+    }
+
     String pathEnv = System.getenv("PATH");
     if (pathEnv == null || pathEnv.isEmpty()) {
       return Optional.empty();
@@ -31,6 +36,22 @@ public final class DefaultPatrolCliLocator implements PatrolCliLocator {
       }
     }
 
+    return Optional.empty();
+  }
+
+  private Optional<Path> resolvePubCacheCli() {
+    String home = System.getProperty("user.home");
+    if (home == null || home.isEmpty()) {
+      return Optional.empty();
+    }
+    Path unixPath = Path.of(home, ".pub-cache", "bin", "patrol");
+    if (Files.isExecutable(unixPath)) {
+      return Optional.of(unixPath);
+    }
+    Path windowsPath = Path.of(home, ".pub-cache", "bin", "patrol.bat");
+    if (Files.isExecutable(windowsPath)) {
+      return Optional.of(windowsPath);
+    }
     return Optional.empty();
   }
 }
