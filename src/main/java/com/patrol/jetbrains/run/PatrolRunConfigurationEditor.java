@@ -4,33 +4,35 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.CheckBoxList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.FormBuilder;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
+import com.patrol.jetbrains.run.FlutterDaemonDeviceProvider.DeviceItem;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.Icon;
+import java.awt.Font;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRunConfiguration> {
-  private static final Icon PATROL_ICON = IconLoader.getIcon("/icons/patrol.svg", PatrolRunConfigurationEditor.class);
-
   private final JBTextField targetField = new JBTextField();
   private final JBTextField argsField = new JBTextField();
-  private final JBTextField deviceField = new JBTextField();
+  private final JComboBox<DeviceItem> deviceBox = new JComboBox<>();
   private final JBTextField workingDirField = new JBTextField();
   private final JBTextField cliPathTextField = new JBTextField();
   private final TextFieldWithBrowseButton cliPathField = new TextFieldWithBrowseButton(cliPathTextField);
@@ -45,6 +47,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final JPanel optionsPanel = new JPanel();
   private final ActionLink modifyOptionsLink =
       new ActionLink("Modify options...", (java.awt.event.ActionListener) event -> showOptionsPopup());
+  private final ActionLink refreshDevicesLink =
+      new ActionLink("Refresh devices", (java.awt.event.ActionListener) event -> refreshDevices());
   private com.intellij.openapi.project.Project project;
 
   @Override
@@ -52,7 +56,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     project = configuration.getProject();
     targetField.setText(configuration.getTarget());
     argsField.setText(configuration.getCliArgs());
-    deviceField.setText(configuration.getDevice());
+    setSelectedDevice(configuration.getDevice());
     workingDirField.setText(configuration.getWorkingDir());
     cliPathField.setText(configuration.getCliPath());
     commandModeBox.setSelectedItem(configuration.getCommandMode());
@@ -60,6 +64,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     envComponent.setEnvs(configuration.getEnvData().getEnvs());
     envComponent.setPassParentEnvs(configuration.getEnvData().isPassParentEnvs());
     resetOptions(configuration);
+    refreshDevices();
     updateCliPathHint();
   }
 
@@ -67,7 +72,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   protected void applyEditorTo(@NotNull PatrolRunConfiguration configuration) {
     configuration.setTarget(targetField.getText());
     configuration.setCliArgs(argsField.getText());
-    configuration.setDevice(deviceField.getText());
+    configuration.setDevice(getSelectedDevice());
     configuration.setWorkingDir(workingDirField.getText());
     configuration.setCliPath(cliPathField.getText());
     configuration.setCommandMode((PatrolCommandMode) commandModeBox.getSelectedItem());
@@ -94,14 +99,13 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       }
     });
     cliPathTextField.getEmptyText().setText("Auto-detecting Patrol CLI...");
-    cliPathField.setButtonIcon(PATROL_ICON);
     cliPathField.addBrowseFolderListener(
         "Select Patrol CLI",
         "Choose the Patrol CLI executable.",
         null,
         FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withFileFilter(this::isPatrolCli)
     );
-    deviceField.getEmptyText().setText("Device ID or name (e.g., emulator-5554, iPhone 14)");
+    deviceBox.setEditable(true);
     commandModeBox.addActionListener(event -> updateOptionRowsVisibility());
 
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
@@ -111,7 +115,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JPanel panel = FormBuilder.createFormBuilder()
         .addLabeledComponent("Test target", targetField)
         .addLabeledComponent("Command", commandModeBox)
-        .addLabeledComponent("Device", deviceField)
+        .addLabeledComponent("Device", createDevicePanel())
         .addLabeledComponent("Patrol CLI args", argsField)
         .addLabeledComponent("Working directory", workingDirField)
         .addLabeledComponent("Patrol CLI path", cliPathField)
@@ -169,6 +173,15 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     cliPathTextField.getEmptyText().setText(text);
   }
 
+  private JPanel createDevicePanel() {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    panel.add(deviceBox);
+    panel.add(refreshDevicesLink);
+    panel.setBorder(JBUI.Borders.emptyBottom(4));
+    return panel;
+  }
+
   private void buildOptionsPanel() {
     optionsPanel.removeAll();
     optionRows.clear();
@@ -180,6 +193,43 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       optionRows.put(option, row);
       optionsPanel.add(row);
     }
+  }
+
+  private void refreshDevices() {
+    String current = getSelectedDevice();
+    com.intellij.openapi.application.ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      java.util.List<DeviceItem> devices = FlutterDaemonDeviceProvider.loadDevices();
+      com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
+        deviceBox.removeAllItems();
+        for (DeviceItem device : devices) {
+          deviceBox.addItem(device);
+        }
+        setSelectedDevice(current);
+      });
+    });
+  }
+
+  private String getSelectedDevice() {
+    Object selected = deviceBox.getEditor().getItem();
+    if (selected instanceof DeviceItem) {
+      return ((DeviceItem) selected).id;
+    }
+    return selected == null ? "" : selected.toString().trim();
+  }
+
+  private void setSelectedDevice(@NotNull String value) {
+    if (value.isEmpty()) {
+      deviceBox.setSelectedItem(null);
+      return;
+    }
+    for (int i = 0; i < deviceBox.getItemCount(); i++) {
+      DeviceItem item = deviceBox.getItemAt(i);
+      if (item != null && value.equals(item.id)) {
+        deviceBox.setSelectedItem(item);
+        return;
+      }
+    }
+    deviceBox.getEditor().setItem(value);
   }
 
   private JComponent createOptionRow(@NotNull PatrolRunOption option) {
@@ -259,32 +309,136 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.setBorder(JBUI.Borders.empty(6));
-    for (PatrolRunOption option : PatrolRunOption.values()) {
-      if (!option.appliesTo(mode)) {
-        continue;
-      }
-      JBCheckBox checkBox = new JBCheckBox(option.getLabel());
-      checkBox.setSelected(optionEnabled.getOrDefault(option, Boolean.FALSE));
-      checkBox.addActionListener(event -> {
-        optionEnabled.put(option, checkBox.isSelected());
-        if (checkBox.isSelected()) {
-          applyDefaultOptionValue(option);
-        }
-        updateOptionRowsVisibility();
-      });
-      panel.add(checkBox);
-    }
+    panel.setBorder(JBUI.Borders.empty(8));
+    panel.add(createGroupLabel("Build"));
+    panel.add(createOptionsList(mode, List.of(PatrolRunOption.DEBUG, PatrolRunOption.PROFILE, PatrolRunOption.RELEASE)));
+    panel.add(createGroupLabel("Targets"));
+    panel.add(createOptionsList(mode, List.of(PatrolRunOption.EXCLUDE, PatrolRunOption.TAGS, PatrolRunOption.EXCLUDE_TAGS)));
+    panel.add(createGroupLabel("Dart Defines"));
+    panel.add(createOptionsList(mode, List.of(PatrolRunOption.DART_DEFINE, PatrolRunOption.DART_DEFINE_FILE)));
+    panel.add(createGroupLabel("Execution"));
+    panel.add(createOptionsList(mode, List.of(
+        PatrolRunOption.GENERATE_BUNDLE,
+        PatrolRunOption.LABEL,
+        PatrolRunOption.TEST_SERVER_PORT,
+        PatrolRunOption.APP_SERVER_PORT,
+        PatrolRunOption.HIDE_TEST_STEPS,
+        PatrolRunOption.CLEAR_TEST_STEPS,
+        PatrolRunOption.CHECK_COMPATIBILITY,
+        PatrolRunOption.UNINSTALL,
+        PatrolRunOption.OPEN_DEVTOOLS
+    )));
+    panel.add(createGroupLabel("Build Metadata"));
+    panel.add(createOptionsList(mode, List.of(
+        PatrolRunOption.FLAVOR,
+        PatrolRunOption.BUILD_NAME,
+        PatrolRunOption.BUILD_NUMBER,
+        PatrolRunOption.PACKAGE_NAME,
+        PatrolRunOption.BUNDLE_ID
+    )));
+    panel.add(createGroupLabel("Coverage & Logs"));
+    panel.add(createOptionsList(mode, List.of(
+        PatrolRunOption.COVERAGE,
+        PatrolRunOption.COVERAGE_IGNORE,
+        PatrolRunOption.COVERAGE_PACKAGE,
+        PatrolRunOption.SHOW_FLUTTER_LOGS
+    )));
+    panel.add(createGroupLabel("iOS Simulator"));
+    panel.add(createOptionsList(mode, List.of(
+        PatrolRunOption.CLEAR_PERMISSIONS,
+        PatrolRunOption.FULL_ISOLATION,
+        PatrolRunOption.IOS_VERSION
+    )));
+    panel.add(createGroupLabel("Web"));
+    panel.add(createOptionsList(mode, List.of(
+        PatrolRunOption.WEB_RESULTS_DIR,
+        PatrolRunOption.WEB_REPORT_DIR,
+        PatrolRunOption.WEB_RETRIES,
+        PatrolRunOption.WEB_VIDEO,
+        PatrolRunOption.WEB_TIMEOUT,
+        PatrolRunOption.WEB_WORKERS,
+        PatrolRunOption.WEB_REPORTER,
+        PatrolRunOption.WEB_LOCALE,
+        PatrolRunOption.WEB_TIMEZONE,
+        PatrolRunOption.WEB_COLOR_SCHEME,
+        PatrolRunOption.WEB_GEOLOCATION,
+        PatrolRunOption.WEB_PERMISSIONS,
+        PatrolRunOption.WEB_USER_AGENT,
+        PatrolRunOption.WEB_VIEWPORT,
+        PatrolRunOption.WEB_GLOBAL_TIMEOUT,
+        PatrolRunOption.WEB_SHARD,
+        PatrolRunOption.WEB_HEADLESS
+    )));
     com.intellij.openapi.ui.popup.JBPopup popup = com.intellij.openapi.ui.popup.JBPopupFactory.getInstance()
         .createComponentPopupBuilder(panel, panel)
+        .setTitle("Add Run Options")
         .setRequestFocus(true)
         .createPopup();
     popup.showUnderneathOf(modifyOptionsLink);
   }
 
+  private JBLabel createGroupLabel(@NotNull String text) {
+    JBLabel label = new JBLabel(text);
+    label.setBorder(JBUI.Borders.empty(6, 0, 4, 0));
+    label.setFont(label.getFont().deriveFont(Font.BOLD));
+    return label;
+  }
+
+  private CheckBoxList<PatrolRunOption> createOptionsList(@NotNull PatrolCommandMode mode,
+                                                          @NotNull List<PatrolRunOption> options) {
+    CheckBoxList<PatrolRunOption> list = new CheckBoxList<>();
+    list.setBorder(JBUI.Borders.emptyLeft(8));
+    List<PatrolRunOption> visibleOptions = new ArrayList<>();
+    for (PatrolRunOption option : options) {
+      if (option.appliesTo(mode)) {
+        visibleOptions.add(option);
+      }
+    }
+    for (PatrolRunOption option : visibleOptions) {
+      list.addItem(option, option.getLabel(), optionEnabled.getOrDefault(option, Boolean.FALSE));
+    }
+    list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+    list.setCheckBoxListListener((index, value) -> {
+      PatrolRunOption option = visibleOptions.get(index);
+      optionEnabled.put(option, value);
+      if (value) {
+        applyDefaultOptionValue(option);
+        enforceMutualExclusion(option, list, visibleOptions);
+      }
+      updateOptionRowsVisibility();
+    });
+    return list;
+  }
+
+  private void enforceMutualExclusion(@NotNull PatrolRunOption selected,
+                                      @NotNull CheckBoxList<PatrolRunOption> list,
+                                      @NotNull List<PatrolRunOption> options) {
+    if (selected != PatrolRunOption.DEBUG
+        && selected != PatrolRunOption.PROFILE
+        && selected != PatrolRunOption.RELEASE) {
+      return;
+    }
+    for (int i = 0; i < options.size(); i++) {
+      PatrolRunOption option = options.get(i);
+      if (option == selected) {
+        continue;
+      }
+      if (option == PatrolRunOption.DEBUG || option == PatrolRunOption.PROFILE || option == PatrolRunOption.RELEASE) {
+        optionEnabled.put(option, Boolean.FALSE);
+        list.setItemSelected(option, false);
+      }
+    }
+  }
+
   private void applyDefaultOptionValue(@NotNull PatrolRunOption option) {
     if (option.getType() == PatrolRunOptionType.TOGGLE) {
       JBCheckBox checkBox = optionToggleFields.get(option);
+      if (checkBox != null && (option == PatrolRunOption.DEBUG
+          || option == PatrolRunOption.PROFILE
+          || option == PatrolRunOption.RELEASE)) {
+        checkBox.setSelected(true);
+        return;
+      }
       if (checkBox != null && option.getDefaultToggleValue() != null) {
         checkBox.setSelected(option.getDefaultToggleValue());
       }

@@ -13,12 +13,13 @@
   - [ ] Configuration options for:
     - [x] Test target specification
     - [x] Command mode: `develop` (watch for changes) or `test` (single run)
-    - [x] Device selection passed as `--device`
+    - [x] Device selection sourced from Flutter Daemon and passed as `--device`
     - [x] Custom Patrol CLI arguments
     - [x] Environment variables
     - [x] Working directory override
     - [ ] Display detected Patrol CLI version when CLI path is not set
-    - [x] Modify options list to enable Patrol CLI flags
+    - [x] Modify options list to enable Patrol CLI flags in a grouped menu similar to PyCharm
+    - [x] Mutually exclusive flags handled for build modes (debug/profile/release)
 
 - [ ] **Gutter Icons**: Display run/debug icons in the editor gutter next to:
   - [ ] Individual `patrolTest()` declarations
@@ -195,7 +196,7 @@
 ### Branding
 - [x] Use the Patrol icon for the plugin metadata displayed in IntelliJ
 - [x] Use the Patrol icon for Patrol run/debug configuration templates
-- [x] Use the Patrol icon on the Patrol CLI path selector control
+- [x] Use the default folder icon on CLI path selector controls
 - [x] Use IntelliJ's standard test folder icon for `patrol_test/`
 
 ## Success Metrics

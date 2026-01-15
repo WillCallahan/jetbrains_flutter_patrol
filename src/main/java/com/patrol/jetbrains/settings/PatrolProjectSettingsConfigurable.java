@@ -57,7 +57,6 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
   @Override
   public @Nullable JComponent createComponent() {
     defaultCliPathField = new TextFieldWithBrowseButton();
-    defaultCliPathField.setButtonIcon(PATROL_ICON);
     defaultCliPathField.addBrowseFolderListener(
         "Select Patrol CLI",
         "Choose the default Patrol CLI executable.",
@@ -70,7 +69,6 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     projectCliOverrideCheckBox = new JBCheckBox("Use project-specific Patrol CLI path");
     projectCliOverrideCheckBox.addActionListener(event -> updateProjectCliEnabled());
     projectCliPathField = new TextFieldWithBrowseButton();
-    projectCliPathField.setButtonIcon(PATROL_ICON);
     projectCliPathField.addBrowseFolderListener(
         "Select Project Patrol CLI",
         "Choose the Patrol CLI executable for this project.",
