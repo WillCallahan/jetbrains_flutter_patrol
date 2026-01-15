@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PatrolRunLineMarkerContributor extends RunLineMarkerContributor {
-  private static final javax.swing.Icon RUN_ICON =
-      IconUtil.scale(AllIcons.RunConfigurations.TestMark, null, 1.3f);
+  private static final javax.swing.Icon RUN_ICON = AllIcons.RunConfigurations.TestMark;
 
   @Override
   public @Nullable Info getInfo(@NotNull PsiElement element) {

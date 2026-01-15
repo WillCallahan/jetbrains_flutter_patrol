@@ -28,9 +28,10 @@ public final class PatrolRunConfigurationProducer extends RunConfigurationProduc
       return false;
     }
 
+    configuration.setCommandMode(PatrolCommandMode.TEST);
     configuration.setTarget(vFile.getPath());
     configuration.setWorkingDir(PatrolTestUtil.defaultWorkingDir(context.getProject()));
-    configuration.setName("Patrol: " + vFile.getName());
+    configuration.setName("Patrol Test: " + vFile.getName());
     sourceElement.set(file);
     return true;
   }
@@ -47,6 +48,7 @@ public final class PatrolRunConfigurationProducer extends RunConfigurationProduc
       return false;
     }
 
-    return vFile.getPath().equals(configuration.getTarget());
+    return vFile.getPath().equals(configuration.getTarget())
+        && configuration.getCommandMode() == PatrolCommandMode.TEST;
   }
 }
