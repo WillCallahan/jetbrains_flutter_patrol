@@ -170,6 +170,8 @@ Enable developers to run and debug Patrol Flutter tests directly from their IDE 
 
 ### Branding
 - Use the Patrol icon for the plugin metadata displayed in IntelliJ
+- Use the Patrol icon for Patrol run/debug configuration templates
+- Use the Patrol icon on the Patrol CLI path selector control
 
 ## Success Metrics
 - Developers can run Patrol tests without switching to terminal
