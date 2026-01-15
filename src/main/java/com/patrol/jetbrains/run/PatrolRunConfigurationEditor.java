@@ -50,6 +50,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final Map<PatrolRunOption, JBCheckBox> optionToggleFields = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBTextField> optionValueFields = new EnumMap<>(PatrolRunOption.class);
   private final JPanel optionsPanel = new JPanel();
+  private final JSeparator optionsTopSeparator = new JSeparator();
+  private final JSeparator optionsBottomSeparator = new JSeparator();
   private final ActionLink modifyOptionsLink =
       new ActionLink("Modify options...", (java.awt.event.ActionListener) event -> showOptionsPopup());
   private com.intellij.openapi.project.Project project;
@@ -198,11 +200,15 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     optionToggleFields.clear();
     optionValueFields.clear();
 
+    optionsTopSeparator.setAlignmentX(0f);
+    optionsBottomSeparator.setAlignmentX(0f);
+    optionsPanel.add(optionsTopSeparator);
     for (PatrolRunOption option : PatrolRunOption.values()) {
       JComponent row = createOptionRow(option);
       optionRows.put(option, row);
       optionsPanel.add(row);
     }
+    optionsPanel.add(optionsBottomSeparator);
   }
 
 
@@ -267,6 +273,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     if (mode == null) {
       mode = PatrolCommandMode.TEST;
     }
+    boolean anyVisible = false;
     for (PatrolRunOption option : PatrolRunOption.values()) {
       JComponent row = optionRows.get(option);
       if (row == null) {
@@ -274,7 +281,10 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       }
       boolean visible = option.appliesTo(mode) && optionEnabled.getOrDefault(option, Boolean.FALSE);
       row.setVisible(visible);
+      anyVisible |= visible;
     }
+    optionsTopSeparator.setVisible(anyVisible);
+    optionsBottomSeparator.setVisible(anyVisible);
     optionsPanel.revalidate();
     optionsPanel.repaint();
   }
