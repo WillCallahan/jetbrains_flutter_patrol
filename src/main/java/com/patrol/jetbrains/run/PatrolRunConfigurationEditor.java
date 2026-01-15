@@ -24,6 +24,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
@@ -282,7 +283,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.setBorder(JBUI.Borders.empty(8, 0, 8, 8));
+    panel.setBorder(JBUI.Borders.empty(8, 8, 8, 8));
     addOptionsGroup(panel, mode, "Build",
         List.of(PatrolRunOption.DEBUG, PatrolRunOption.PROFILE, PatrolRunOption.RELEASE));
     addOptionsGroup(panel, mode, "Targets",
@@ -353,16 +354,22 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     if (list == null) {
       return;
     }
-    panel.add(createGroupLabel(title));
+    panel.add(createGroupHeader(title));
     panel.add(list);
   }
 
-  private JBLabel createGroupLabel(@NotNull String text) {
+  private JComponent createGroupHeader(@NotNull String text) {
+    JPanel header = new JPanel();
+    header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+    header.setBorder(JBUI.Borders.empty(6, 0, 6, 0));
     JBLabel label = new JBLabel(text);
-    label.setBorder(JBUI.Borders.empty(6, 0, 4, 0));
     label.setFont(label.getFont().deriveFont(Font.BOLD));
     label.setAlignmentX(0f);
-    return label;
+    JSeparator separator = new JSeparator();
+    separator.setAlignmentX(0f);
+    header.add(label);
+    header.add(separator);
+    return header;
   }
 
   private @Nullable CheckBoxList<PatrolRunOption> createOptionsList(@NotNull PatrolCommandMode mode,
