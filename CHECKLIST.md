@@ -12,6 +12,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] Device selection from Flutter Daemon passed to Patrol CLI
 - [x] Modify options for Patrol CLI flags
 - [x] Mutually exclusive build mode flags enforced
+- [x] Options show tooltips
 - [ ] Hot reload integration (auto + manual)
 - [ ] Reload status feedback (console, status bar)
 - [ ] Test results in JetBrains test runner format

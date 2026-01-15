@@ -24,6 +24,8 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.Font;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -48,7 +50,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final ActionLink modifyOptionsLink =
       new ActionLink("Modify options...", (java.awt.event.ActionListener) event -> showOptionsPopup());
   private final ActionLink refreshDevicesLink =
-      new ActionLink("Refresh devices", (java.awt.event.ActionListener) event -> refreshDevices());
+      new ActionLink("Refresh devices", (java.awt.event.ActionListener) event -> refreshDevices(true));
   private com.intellij.openapi.project.Project project;
 
   @Override
@@ -64,7 +66,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     envComponent.setEnvs(configuration.getEnvData().getEnvs());
     envComponent.setPassParentEnvs(configuration.getEnvData().isPassParentEnvs());
     resetOptions(configuration);
-    refreshDevices();
+    refreshDevices(false);
     updateCliPathHint();
   }
 
@@ -195,10 +197,12 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
   }
 
-  private void refreshDevices() {
+  private void refreshDevices(boolean forceRefresh) {
     String current = getSelectedDevice();
     com.intellij.openapi.application.ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      java.util.List<DeviceItem> devices = FlutterDaemonDeviceProvider.loadDevices();
+      java.util.List<DeviceItem> devices = project == null
+          ? FlutterDaemonDeviceProvider.loadDevices()
+          : FlutterDaemonDeviceProvider.loadDevices(project, forceRefresh);
       com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
         deviceBox.removeAllItems();
         for (DeviceItem device : devices) {
@@ -397,6 +401,14 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     for (PatrolRunOption option : visibleOptions) {
       list.addItem(option, option.getLabel(), optionEnabled.getOrDefault(option, Boolean.FALSE));
     }
+    list.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent event) {
+        int index = list.locationToIndex(event.getPoint());
+        PatrolRunOption option = index >= 0 ? list.getItemAt(index) : null;
+        list.setToolTipText(option == null ? null : option.getDescription());
+      }
+    });
     list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
     list.setCheckBoxListListener((index, value) -> {
       PatrolRunOption option = visibleOptions.get(index);

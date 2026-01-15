@@ -1,5 +1,6 @@
 package com.patrol.jetbrains.run;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,11 +21,30 @@ public final class FlutterDaemonDeviceProvider {
   private static final Pattern ID_PATTERN = Pattern.compile("\"id\"\\s*:\\s*\"([^\"]+)\"");
   private static final Pattern NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
   private static final Pattern PLATFORM_PATTERN = Pattern.compile("\"platform\"\\s*:\\s*\"([^\"]+)\"");
+  private static final long CACHE_TTL_MS = 3000L;
+  private static final Map<String, CacheEntry> CACHE = new ConcurrentHashMap<>();
 
   private FlutterDaemonDeviceProvider() {
   }
 
+  public static @NotNull List<DeviceItem> loadDevices(@NotNull Project project, boolean forceRefresh) {
+    String key = cacheKey(project);
+    if (!forceRefresh) {
+      CacheEntry entry = CACHE.get(key);
+      if (entry != null && entry.isFresh()) {
+        return new ArrayList<>(entry.devices);
+      }
+    }
+    List<DeviceItem> devices = loadDevicesInternal();
+    CACHE.put(key, new CacheEntry(devices));
+    return devices;
+  }
+
   public static @NotNull List<DeviceItem> loadDevices() {
+    return loadDevicesInternal();
+  }
+
+  private static @NotNull List<DeviceItem> loadDevicesInternal() {
     Map<String, DeviceItem> devices = new LinkedHashMap<>();
     devices.put("all", new DeviceItem("all", "All devices", ""));
 
@@ -86,6 +107,25 @@ public final class FlutterDaemonDeviceProvider {
       return null;
     }
     return matcher.group(1);
+  }
+
+  private static @NotNull String cacheKey(@NotNull Project project) {
+    String basePath = project.getBasePath();
+    return basePath == null ? project.getLocationHash() : basePath;
+  }
+
+  private static final class CacheEntry {
+    private final List<DeviceItem> devices;
+    private final long timestamp;
+
+    private CacheEntry(@NotNull List<DeviceItem> devices) {
+      this.devices = new ArrayList<>(devices);
+      this.timestamp = System.currentTimeMillis();
+    }
+
+    private boolean isFresh() {
+      return System.currentTimeMillis() - timestamp < CACHE_TTL_MS;
+    }
   }
 
   public static final class DeviceItem {

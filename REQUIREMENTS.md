@@ -20,6 +20,7 @@
     - [ ] Display detected Patrol CLI version when CLI path is not set
     - [x] Modify options list to enable Patrol CLI flags in a grouped menu similar to PyCharm
     - [x] Mutually exclusive flags handled for build modes (debug/profile/release)
+    - [x] Options include short tooltips for flag descriptions
 
 - [ ] **Gutter Icons**: Display run/debug icons in the editor gutter next to:
   - [ ] Individual `patrolTest()` declarations
@@ -44,6 +45,7 @@
 - [ ] **Default Device**: Select last used device; if none, choose first available emulator/simulator
 - [ ] **Unavailable Devices**: Surface a clear error and link to device manager
 - [ ] **Concurrency**: Allow one device per test session; explicitly block multi-device runs for now
+  - [x] Cache device list per project to avoid repeated Flutter Daemon starts
 
 ### 1.3 Run/Debug Lifecycle
 - [ ] **Stop/Cancel**: Terminate Patrol CLI, detach from device, and clean up temp artifacts
