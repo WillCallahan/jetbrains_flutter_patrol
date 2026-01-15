@@ -146,6 +146,9 @@ public final class PatrolCommandLineState extends CommandLineState {
 
   private String resolveDeviceTarget() {
     String configured = configuration.getDevice();
+    if (!StringUtil.isEmptyOrSpaces(configured)) {
+      return configured.trim();
+    }
     com.intellij.execution.ExecutionTarget target = getEnvironment().getExecutionTarget();
     if (target != null) {
       String id = extractDeviceId(target.getId());
@@ -157,7 +160,7 @@ public final class PatrolCommandLineState extends CommandLineState {
         return name;
       }
     }
-    return configured == null ? "" : configured.trim();
+    return "";
   }
 
   private String extractDeviceId(String raw) {
