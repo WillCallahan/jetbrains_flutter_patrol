@@ -10,6 +10,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.FormBuilder;
@@ -33,7 +34,7 @@ import java.util.Map;
 
 public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRunConfiguration> {
   private final JBTextField targetField = new JBTextField();
-  private final JBTextField argsField = new JBTextField();
+  private final ExpandableTextField argsField = new ExpandableTextField();
   private final JBTextField deviceField = new JBTextField();
   private final JBTextField workingDirField = new JBTextField();
   private final JBTextField cliPathTextField = new JBTextField();

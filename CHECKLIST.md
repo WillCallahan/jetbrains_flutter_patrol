@@ -14,6 +14,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] Mutually exclusive build mode flags enforced
 - [x] Options show tooltips
 - [x] Device override field in run configuration (defaults to last selected)
+- [x] CLI args field supports expandable multi-line input
 - [ ] Hot reload integration (auto + manual)
 - [ ] Reload status feedback (console, status bar)
 - [x] Manual hot reload button in Run tool window
