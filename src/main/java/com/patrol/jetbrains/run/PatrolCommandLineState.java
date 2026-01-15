@@ -16,6 +16,7 @@ import com.patrol.jetbrains.PatrolNotifications;
 import com.patrol.jetbrains.cli.PatrolCliVersionChecker;
 import com.patrol.jetbrains.cli.SemanticVersion;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
+import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -72,9 +73,15 @@ public final class PatrolCommandLineState extends CommandLineState {
     if (!StringUtil.isEmptyOrSpaces(configuration.getCliPath())) {
       overridePath = Path.of(configuration.getCliPath());
     } else {
-      String defaultPath = PatrolAppSettingsState.getInstance().defaultCliPath;
-      if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
-        overridePath = Path.of(defaultPath);
+      PatrolProjectSettingsState projectSettings = PatrolProjectSettingsState.getInstance(configuration.getProject());
+      String projectPath = projectSettings.useProjectCliPath ? projectSettings.projectCliPath : "";
+      if (!StringUtil.isEmptyOrSpaces(projectPath)) {
+        overridePath = Path.of(projectPath);
+      } else {
+        String defaultPath = PatrolAppSettingsState.getInstance().defaultCliPath;
+        if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
+          overridePath = Path.of(defaultPath);
+        }
       }
     }
 

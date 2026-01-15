@@ -87,15 +87,14 @@
 - [x] **CLI Default Path**: Allow configuring a default Patrol CLI path at the IDE level
   - [x] Used as the baseline for new Run/Debug configurations
   - [x] Run configuration override takes precedence when set
+- [x] **Project-Specific CLI Path**: Allow a per-project Patrol CLI override via checkbox
 - [x] **Test Directory Detection**:
-  - [x] Allow users to configure which directory paths are treated as Patrol test roots
-  - [x] Defaults to `integration_test/`, `test/`, and the value from `pubspec.yaml` (`patrol.test_directory`)
+  - [x] Use a single test root configured by `patrol.test_directory` in `pubspec.yaml`
+  - [x] Default to `integration_test/` if `patrol.test_directory` is missing
   - [x] Merge behavior:
-    - [x] If `patrol.test_directory` is present, include it in detection by default
-    - [x] User-configured paths are additive unless explicitly disabled
+    - [x] `patrol.test_directory` overrides the default root
   - [x] Scope:
     - [x] IDE settings define global defaults
-    - [x] Project settings can override or disable specific paths
 - [x] **Pubspec Validation**:
   - [x] Read `patrol.test_directory` from `pubspec.yaml`
   - [x] Warn if the value is missing, invalid, or points to a non-existent directory

@@ -1,28 +1,27 @@
 package com.patrol.jetbrains.settings;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.CollectionListModel;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import java.util.ArrayList;
-import java.util.List;
 
 public final class PatrolProjectSettingsConfigurable implements SearchableConfigurable {
   private static final Icon PATROL_ICON = IconLoader.getIcon("/icons/patrol.svg", PatrolProjectSettingsConfigurable.class);
@@ -31,14 +30,10 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
 
   private JPanel panel;
   private TextFieldWithBrowseButton defaultCliPathField;
-  private CollectionListModel<String> appTestRootsModel;
-  private JBList<String> appTestRootsList;
-  private JPanel appTestRootsPanel;
-  private JBCheckBox overrideRootsCheckBox;
-  private JBCheckBox includePubspecCheckBox;
-  private CollectionListModel<String> testRootsModel;
-  private JBList<String> testRootsList;
-  private JPanel testRootsPanel;
+  private JBCheckBox projectCliOverrideCheckBox;
+  private TextFieldWithBrowseButton projectCliPathField;
+  private JBLabel pubspecValueLabel;
+  private ActionLink openPubspecLink;
   private JBLabel pubspecWarningLabel;
 
   public PatrolProjectSettingsConfigurable(@NotNull Project project) {
@@ -66,24 +61,19 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
         FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
     );
 
-    appTestRootsModel = new CollectionListModel<>();
-    appTestRootsList = new JBList<>(appTestRootsModel);
-    appTestRootsPanel = ToolbarDecorator.createDecorator(appTestRootsList)
-        .setAddAction(button -> addAppTestRoot())
-        .setRemoveAction(button -> removeAppTestRoot())
-        .createPanel();
+    projectCliOverrideCheckBox = new JBCheckBox("Use project-specific Patrol CLI path");
+    projectCliOverrideCheckBox.addActionListener(event -> updateProjectCliEnabled());
+    projectCliPathField = new TextFieldWithBrowseButton();
+    projectCliPathField.setButtonIcon(PATROL_ICON);
+    projectCliPathField.addBrowseFolderListener(
+        "Select Project Patrol CLI",
+        "Choose the Patrol CLI executable for this project.",
+        null,
+        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+    );
 
-    overrideRootsCheckBox = new JBCheckBox("Override test roots for this project");
-    includePubspecCheckBox = new JBCheckBox("Include patrol.test_directory from pubspec.yaml");
-    includePubspecCheckBox.addActionListener(event -> updatePubspecWarning());
-    overrideRootsCheckBox.addActionListener(event -> updateRootsEnabled());
-
-    testRootsModel = new CollectionListModel<>();
-    testRootsList = new JBList<>(testRootsModel);
-    testRootsPanel = ToolbarDecorator.createDecorator(testRootsList)
-        .setAddAction(button -> addTestRoot())
-        .setRemoveAction(button -> removeTestRoot())
-        .createPanel();
+    pubspecValueLabel = new JBLabel();
+    openPubspecLink = new ActionLink("Open pubspec.yaml", event -> openPubspec());
 
     pubspecWarningLabel = new JBLabel();
     pubspecWarningLabel.setForeground(JBColor.RED);
@@ -91,12 +81,12 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
 
     panel = FormBuilder.createFormBuilder()
         .addComponent(new TitledSeparator("IDE Defaults"))
-        .addLabeledComponent("Default Patrol CLI path", defaultCliPathField)
-        .addLabeledComponent("Patrol test root paths", appTestRootsPanel)
+        .addComponent(createFieldPanel("Default Patrol CLI path", defaultCliPathField, null))
         .addComponent(new TitledSeparator("Project Overrides"))
-        .addComponent(overrideRootsCheckBox)
-        .addLabeledComponent("Project Patrol test root paths", testRootsPanel)
-        .addComponent(includePubspecCheckBox)
+        .addComponent(projectCliOverrideCheckBox)
+        .addComponent(createFieldPanel("Project Patrol CLI path", projectCliPathField, null))
+        .addComponent(new TitledSeparator("Patrol Test Directory"))
+        .addComponent(createFieldPanel("Patrol test directory", pubspecValueLabel, openPubspecLink))
         .addComponent(pubspecWarningLabel)
         .getPanel();
     return panel;
@@ -106,7 +96,7 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
   public boolean isModified() {
     PatrolAppSettingsState appSettings = PatrolAppSettingsState.getInstance();
     PatrolProjectSettingsState settings = PatrolProjectSettingsState.getInstance(project);
-    if (overrideRootsCheckBox == null) {
+    if (projectCliOverrideCheckBox == null) {
       return false;
     }
     String currentCli = StringUtil.notNullize(defaultCliPathField.getText()).trim();
@@ -114,30 +104,24 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     if (!currentCli.equals(storedCli)) {
       return true;
     }
-    if (!getModelRoots(appTestRootsModel).equals(appSettings.testRoots)) {
+    if (projectCliOverrideCheckBox.isSelected() != settings.useProjectCliPath) {
       return true;
     }
-    if (overrideRootsCheckBox.isSelected() != settings.useProjectTestRoots) {
-      return true;
-    }
-    if (includePubspecCheckBox.isSelected() != settings.includePubspecTestDirectory) {
-      return true;
-    }
-    return !getModelRoots(testRootsModel).equals(settings.projectTestRoots);
+    String currentProjectCli = StringUtil.notNullize(projectCliPathField.getText()).trim();
+    String storedProjectCli = StringUtil.notNullize(settings.projectCliPath).trim();
+    return !currentProjectCli.equals(storedProjectCli);
   }
 
   @Override
   public void apply() {
-    if (overrideRootsCheckBox == null) {
+    if (projectCliOverrideCheckBox == null) {
       return;
     }
     PatrolAppSettingsState appSettings = PatrolAppSettingsState.getInstance();
     appSettings.defaultCliPath = StringUtil.notNullize(defaultCliPathField.getText()).trim();
-    appSettings.testRoots = new ArrayList<>(getModelRoots(appTestRootsModel));
     PatrolProjectSettingsState settings = PatrolProjectSettingsState.getInstance(project);
-    settings.useProjectTestRoots = overrideRootsCheckBox.isSelected();
-    settings.includePubspecTestDirectory = includePubspecCheckBox.isSelected();
-    settings.projectTestRoots = new ArrayList<>(getModelRoots(testRootsModel));
+    settings.useProjectCliPath = projectCliOverrideCheckBox.isSelected();
+    settings.projectCliPath = StringUtil.notNullize(projectCliPathField.getText()).trim();
     updatePubspecWarning();
   }
 
@@ -148,21 +132,14 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     if (defaultCliPathField != null) {
       defaultCliPathField.setText(appSettings.defaultCliPath);
     }
-    if (appTestRootsModel != null) {
-      appTestRootsModel.removeAll();
-      appTestRootsModel.addAll(0, appSettings.testRoots);
+    if (projectCliOverrideCheckBox != null) {
+      projectCliOverrideCheckBox.setSelected(settings.useProjectCliPath);
     }
-    if (overrideRootsCheckBox != null) {
-      overrideRootsCheckBox.setSelected(settings.useProjectTestRoots);
+    if (projectCliPathField != null) {
+      projectCliPathField.setText(settings.projectCliPath);
     }
-    if (includePubspecCheckBox != null) {
-      includePubspecCheckBox.setSelected(settings.includePubspecTestDirectory);
-    }
-    if (testRootsModel != null) {
-      testRootsModel.removeAll();
-      testRootsModel.addAll(0, settings.projectTestRoots);
-    }
-    updateRootsEnabled();
+    updateProjectCliEnabled();
+    updatePubspecValue();
     updatePubspecWarning();
   }
 
@@ -170,74 +147,23 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
   public void disposeUIResources() {
     panel = null;
     defaultCliPathField = null;
-    appTestRootsModel = null;
-    appTestRootsList = null;
-    appTestRootsPanel = null;
-    overrideRootsCheckBox = null;
-    includePubspecCheckBox = null;
-    testRootsModel = null;
-    testRootsList = null;
-    testRootsPanel = null;
+    projectCliOverrideCheckBox = null;
+    projectCliPathField = null;
+    pubspecValueLabel = null;
+    openPubspecLink = null;
     pubspecWarningLabel = null;
   }
 
-  private void addTestRoot() {
-    if (overrideRootsCheckBox != null && !overrideRootsCheckBox.isSelected()) {
+  private void updateProjectCliEnabled() {
+    if (projectCliOverrideCheckBox == null || projectCliPathField == null) {
       return;
     }
-    String input = Messages.showInputDialog(panel,
-        "Enter a Patrol test root path (relative to project root).",
-        "Add Project Test Root",
-        null);
-    if (StringUtil.isEmptyOrSpaces(input)) {
-      return;
-    }
-    testRootsModel.add(StringUtil.trim(input));
-  }
-
-  private void addAppTestRoot() {
-    String input = Messages.showInputDialog(panel,
-        "Enter a Patrol test root path (relative to project root).",
-        "Add Test Root",
-        null);
-    if (StringUtil.isEmptyOrSpaces(input)) {
-      return;
-    }
-    appTestRootsModel.add(StringUtil.trim(input));
-  }
-
-  private void removeTestRoot() {
-    if (overrideRootsCheckBox != null && !overrideRootsCheckBox.isSelected()) {
-      return;
-    }
-    int index = testRootsList.getSelectedIndex();
-    if (index >= 0) {
-      testRootsModel.remove(index);
-    }
-  }
-
-  private void removeAppTestRoot() {
-    int index = appTestRootsList.getSelectedIndex();
-    if (index >= 0) {
-      appTestRootsModel.remove(index);
-    }
-  }
-
-  private void updateRootsEnabled() {
-    if (overrideRootsCheckBox == null || testRootsList == null || testRootsPanel == null) {
-      return;
-    }
-    boolean enabled = overrideRootsCheckBox.isSelected();
-    testRootsList.setEnabled(enabled);
-    testRootsPanel.setEnabled(enabled);
+    boolean enabled = projectCliOverrideCheckBox.isSelected();
+    projectCliPathField.setEnabled(enabled);
   }
 
   private void updatePubspecWarning() {
-    if (pubspecWarningLabel == null || includePubspecCheckBox == null) {
-      return;
-    }
-    if (!includePubspecCheckBox.isSelected()) {
-      pubspecWarningLabel.setVisible(false);
+    if (pubspecWarningLabel == null) {
       return;
     }
     String warning = PubspecUtil.validatePatrolTestDirectory(project);
@@ -249,10 +175,39 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     }
   }
 
-  private @NotNull List<String> getModelRoots(@Nullable CollectionListModel<String> model) {
-    if (model == null) {
-      return List.of();
+  private void updatePubspecValue() {
+    if (pubspecValueLabel == null) {
+      return;
     }
-    return new ArrayList<>(model.getItems());
+    String value = PubspecUtil.readPatrolTestDirectory(project).orElse("");
+    if (StringUtil.isEmptyOrSpaces(value)) {
+      pubspecValueLabel.setText("Set patrol.test_directory in pubspec.yaml (currently using integration_test).");
+    } else {
+      pubspecValueLabel.setText("Configured via patrol.test_directory: " + value.trim());
+    }
+  }
+
+  private void openPubspec() {
+    String basePath = project.getBasePath();
+    if (basePath == null || basePath.isEmpty()) {
+      return;
+    }
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(basePath + "/pubspec.yaml");
+    if (file != null) {
+      FileEditorManager.getInstance(project).openFile(file, true);
+    }
+  }
+
+  private @NotNull JPanel createFieldPanel(@NotNull String labelText,
+                                           @NotNull JComponent field,
+                                           @Nullable JComponent helper) {
+    JPanel container = new JPanel();
+    container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+    container.add(new JBLabel(labelText));
+    container.add(field);
+    if (helper != null) {
+      container.add(helper);
+    }
+    return container;
   }
 }

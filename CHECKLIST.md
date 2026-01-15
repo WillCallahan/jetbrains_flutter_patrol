@@ -62,6 +62,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] `plugin.xml` in `src/main/resources/META-INF`
 - [x] CLI path resolution (override + PATH)
 - [x] IDE settings (default CLI path + test root configuration)
+- [x] Project-specific CLI override
 - [x] Pubspec `patrol.test_directory` warning in settings
 - [x] Settings grouped under Languages & Frameworks
 - [ ] CLI stdout/stderr separation

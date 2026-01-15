@@ -8,21 +8,11 @@ import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Service
 @State(name = "PatrolAppSettings", storages = @Storage("patrol.xml"))
 public final class PatrolAppSettingsState implements PersistentStateComponent<PatrolAppSettingsState> {
   public String defaultCliPath = "";
-  public List<String> testRoots = new ArrayList<>();
-
-  public PatrolAppSettingsState() {
-    if (testRoots.isEmpty()) {
-      testRoots.add("integration_test");
-      testRoots.add("test");
-    }
-  }
+  public String defaultTestRoot = "integration_test";
 
   public static PatrolAppSettingsState getInstance() {
     return ApplicationManager.getApplication().getService(PatrolAppSettingsState.class);
@@ -36,6 +26,8 @@ public final class PatrolAppSettingsState implements PersistentStateComponent<Pa
   @Override
   public void loadState(@NotNull PatrolAppSettingsState state) {
     this.defaultCliPath = state.defaultCliPath;
-    this.testRoots = new ArrayList<>(state.testRoots);
+    this.defaultTestRoot = state.defaultTestRoot == null || state.defaultTestRoot.isEmpty()
+        ? "integration_test"
+        : state.defaultTestRoot;
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
+import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComboBox;
@@ -31,9 +32,11 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       new JComboBox<>(PatrolCommandMode.values());
   private final JBCheckBox diagnosticCheckBox = new JBCheckBox("Enable diagnostic logging");
   private final EnvironmentVariablesComponent envComponent = new EnvironmentVariablesComponent();
+  private com.intellij.openapi.project.Project project;
 
   @Override
   protected void resetEditorFrom(@NotNull PatrolRunConfiguration configuration) {
+    project = configuration.getProject();
     targetField.setText(configuration.getTarget());
     argsField.setText(configuration.getCliArgs());
     workingDirField.setText(configuration.getWorkingDir());
@@ -107,14 +110,25 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
 
     String text;
     String defaultPath = PatrolAppSettingsState.getInstance().defaultCliPath;
+    String projectPath = "";
+    if (project != null) {
+      PatrolProjectSettingsState projectSettings = PatrolProjectSettingsState.getInstance(project);
+      if (projectSettings.useProjectCliPath) {
+        projectPath = projectSettings.projectCliPath;
+      }
+    }
+    boolean hasProjectPath = !StringUtil.isEmptyOrSpaces(projectPath);
     java.nio.file.Path preferred = null;
-    if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
+    if (hasProjectPath) {
+      preferred = java.nio.file.Path.of(projectPath.trim());
+    } else if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
       preferred = java.nio.file.Path.of(defaultPath.trim());
     }
+
     java.util.Optional<java.nio.file.Path> resolved = new DefaultPatrolCliLocator(preferred).findPatrolCli();
     if (resolved.isPresent()) {
       if (preferred != null && resolved.get().equals(preferred)) {
-        text = "Default: " + resolved.get();
+        text = hasProjectPath ? "Project default: " + resolved.get() : "Default: " + resolved.get();
       } else if (preferred != null) {
         text = "Detected: " + resolved.get() + " (default not found)";
       } else {

@@ -8,15 +8,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Service(Service.Level.PROJECT)
 @State(name = "PatrolProjectSettings", storages = @Storage("patrol.project.xml"))
 public final class PatrolProjectSettingsState implements PersistentStateComponent<PatrolProjectSettingsState> {
-  public boolean useProjectTestRoots = false;
-  public boolean includePubspecTestDirectory = true;
-  public List<String> projectTestRoots = new ArrayList<>();
+  public boolean useProjectCliPath = false;
+  public String projectCliPath = "";
 
   public static PatrolProjectSettingsState getInstance(@NotNull Project project) {
     return project.getService(PatrolProjectSettingsState.class);
@@ -29,8 +26,7 @@ public final class PatrolProjectSettingsState implements PersistentStateComponen
 
   @Override
   public void loadState(@NotNull PatrolProjectSettingsState state) {
-    this.useProjectTestRoots = state.useProjectTestRoots;
-    this.includePubspecTestDirectory = state.includePubspecTestDirectory;
-    this.projectTestRoots = new ArrayList<>(state.projectTestRoots);
+    this.useProjectCliPath = state.useProjectCliPath;
+    this.projectCliPath = state.projectCliPath;
   }
 }
