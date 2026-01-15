@@ -13,7 +13,7 @@
   - [ ] Configuration options for:
     - [x] Test target specification
     - [x] Command mode: `develop` (watch for changes) or `test` (single run)
-    - [x] Device selection sourced from Flutter Daemon and passed as `--device`
+    - [x] Device selection sourced from the IDE device selector and passed as `--device`
     - [x] Custom Patrol CLI arguments
     - [x] Environment variables
     - [x] Working directory override
@@ -45,7 +45,6 @@
 - [ ] **Default Device**: Select last used device; if none, choose first available emulator/simulator
 - [ ] **Unavailable Devices**: Surface a clear error and link to device manager
 - [ ] **Concurrency**: Allow one device per test session; explicitly block multi-device runs for now
-  - [x] Cache device list per project to avoid repeated Flutter Daemon starts
 
 ### 1.3 Run/Debug Lifecycle
 - [ ] **Stop/Cancel**: Terminate Patrol CLI, detach from device, and clean up temp artifacts

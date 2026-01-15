@@ -46,9 +46,10 @@ public final class PatrolCommandLineState extends CommandLineState {
     } else {
       commandLine.addParameter("test");
     }
-    if (!StringUtil.isEmptyOrSpaces(configuration.getDevice())) {
+    String device = resolveDeviceTarget();
+    if (!StringUtil.isEmptyOrSpaces(device)) {
       commandLine.addParameter("--device");
-      commandLine.addParameter(configuration.getDevice().trim());
+      commandLine.addParameter(device);
     }
     commandLine.addParameter(configuration.getTarget());
     addOptionParameters(commandLine);
@@ -108,6 +109,22 @@ public final class PatrolCommandLineState extends CommandLineState {
         LOG.info("Detected Patrol CLI version " + version);
       }
     });
+  }
+
+  private String resolveDeviceTarget() {
+    String configured = configuration.getDevice();
+    com.intellij.execution.ExecutionTarget target = getEnvironment().getExecutionTarget();
+    if (target != null) {
+      String id = target.getId();
+      if (!StringUtil.isEmptyOrSpaces(id) && !"default".equalsIgnoreCase(id)) {
+        return id;
+      }
+      String name = target.getDisplayName();
+      if (!StringUtil.isEmptyOrSpaces(name)) {
+        return name.trim();
+      }
+    }
+    return configured == null ? "" : configured.trim();
   }
 
   private void addOptionParameters(@NotNull com.intellij.execution.configurations.GeneralCommandLine commandLine) {

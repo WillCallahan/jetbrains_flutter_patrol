@@ -16,7 +16,6 @@ import com.intellij.util.ui.FormBuilder;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
-import com.patrol.jetbrains.run.FlutterDaemonDeviceProvider.DeviceItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,6 @@ import java.util.Map;
 public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRunConfiguration> {
   private final JBTextField targetField = new JBTextField();
   private final JBTextField argsField = new JBTextField();
-  private final JComboBox<DeviceItem> deviceBox = new JComboBox<>();
   private final JBTextField workingDirField = new JBTextField();
   private final JBTextField cliPathTextField = new JBTextField();
   private final TextFieldWithBrowseButton cliPathField = new TextFieldWithBrowseButton(cliPathTextField);
@@ -50,8 +48,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final JPanel optionsPanel = new JPanel();
   private final ActionLink modifyOptionsLink =
       new ActionLink("Modify options...", (java.awt.event.ActionListener) event -> showOptionsPopup());
-  private final ActionLink refreshDevicesLink =
-      new ActionLink("Refresh devices", (java.awt.event.ActionListener) event -> refreshDevices(true));
   private com.intellij.openapi.project.Project project;
 
   @Override
@@ -59,7 +55,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     project = configuration.getProject();
     targetField.setText(configuration.getTarget());
     argsField.setText(configuration.getCliArgs());
-    setSelectedDevice(configuration.getDevice());
     workingDirField.setText(configuration.getWorkingDir());
     cliPathField.setText(configuration.getCliPath());
     commandModeBox.setSelectedItem(configuration.getCommandMode());
@@ -67,7 +62,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     envComponent.setEnvs(configuration.getEnvData().getEnvs());
     envComponent.setPassParentEnvs(configuration.getEnvData().isPassParentEnvs());
     resetOptions(configuration);
-    refreshDevices(false);
     updateCliPathHint();
   }
 
@@ -75,7 +69,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   protected void applyEditorTo(@NotNull PatrolRunConfiguration configuration) {
     configuration.setTarget(targetField.getText());
     configuration.setCliArgs(argsField.getText());
-    configuration.setDevice(getSelectedDevice());
     configuration.setWorkingDir(workingDirField.getText());
     configuration.setCliPath(cliPathField.getText());
     configuration.setCommandMode((PatrolCommandMode) commandModeBox.getSelectedItem());
@@ -108,7 +101,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         null,
         FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withFileFilter(this::isPatrolCli)
     );
-    deviceBox.setEditable(true);
     commandModeBox.addActionListener(event -> updateOptionRowsVisibility());
 
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
@@ -118,7 +110,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JPanel panel = FormBuilder.createFormBuilder()
         .addLabeledComponent("Test target", targetField)
         .addLabeledComponent("Command", commandModeBox)
-        .addLabeledComponent("Device", createDevicePanel())
         .addLabeledComponent("Patrol CLI args", argsField)
         .addLabeledComponent("Working directory", workingDirField)
         .addLabeledComponent("Patrol CLI path", cliPathField)
@@ -176,15 +167,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     cliPathTextField.getEmptyText().setText(text);
   }
 
-  private JPanel createDevicePanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(deviceBox);
-    panel.add(refreshDevicesLink);
-    panel.setBorder(JBUI.Borders.emptyBottom(4));
-    return panel;
-  }
-
   private void buildOptionsPanel() {
     optionsPanel.removeAll();
     optionRows.clear();
@@ -198,44 +180,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
   }
 
-  private void refreshDevices(boolean forceRefresh) {
-    String current = getSelectedDevice();
-    com.intellij.openapi.application.ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      java.util.List<DeviceItem> devices = project == null
-          ? FlutterDaemonDeviceProvider.loadDevices()
-          : FlutterDaemonDeviceProvider.loadDevices(project, forceRefresh);
-      com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
-        deviceBox.removeAllItems();
-        for (DeviceItem device : devices) {
-          deviceBox.addItem(device);
-        }
-        setSelectedDevice(current);
-      });
-    });
-  }
-
-  private String getSelectedDevice() {
-    Object selected = deviceBox.getEditor().getItem();
-    if (selected instanceof DeviceItem) {
-      return ((DeviceItem) selected).id;
-    }
-    return selected == null ? "" : selected.toString().trim();
-  }
-
-  private void setSelectedDevice(@NotNull String value) {
-    if (value.isEmpty()) {
-      deviceBox.setSelectedItem(null);
-      return;
-    }
-    for (int i = 0; i < deviceBox.getItemCount(); i++) {
-      DeviceItem item = deviceBox.getItemAt(i);
-      if (item != null && value.equals(item.id)) {
-        deviceBox.setSelectedItem(item);
-        return;
-      }
-    }
-    deviceBox.getEditor().setItem(value);
-  }
 
   private JComponent createOptionRow(@NotNull PatrolRunOption option) {
     if (option.getType() == PatrolRunOptionType.TOGGLE) {
