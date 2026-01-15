@@ -16,7 +16,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <configurationType implementation="com.patrol.jetbrains.run.PatrolRunConfigurationType"/>
     <runConfigurationProducer implementation="com.patrol.jetbrains.run.PatrolRunConfigurationProducer"/>
-    <runLineMarkerContributor implementation="com.patrol.jetbrains.run.PatrolRunLineMarkerContributor"/>
+    <runLineMarkerContributor language="Dart"
+                              implementationClass="com.patrol.jetbrains.run.PatrolRunLineMarkerContributor"/>
     <fileIconProvider implementation="com.patrol.jetbrains.discovery.PatrolTestFolderIconProvider"/>
     <projectConfigurable id="patrol.project.settings"
                          parentId="language"
