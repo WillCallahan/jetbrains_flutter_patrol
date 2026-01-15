@@ -14,6 +14,7 @@
     - [x] Test target specification
     - [x] Command mode: `develop` (watch for changes) or `test` (single run)
     - [x] Device selection sourced from the IDE device selector and passed as `--device`
+    - [x] Allow a run configuration device override, defaulted to the last selected device
     - [x] Custom Patrol CLI arguments
     - [x] Environment variables
     - [x] Working directory override

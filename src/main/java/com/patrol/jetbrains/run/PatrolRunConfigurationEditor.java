@@ -34,6 +34,7 @@ import java.util.Map;
 public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRunConfiguration> {
   private final JBTextField targetField = new JBTextField();
   private final JBTextField argsField = new JBTextField();
+  private final JBTextField deviceField = new JBTextField();
   private final JBTextField workingDirField = new JBTextField();
   private final JBTextField cliPathTextField = new JBTextField();
   private final TextFieldWithBrowseButton cliPathField = new TextFieldWithBrowseButton(cliPathTextField);
@@ -55,6 +56,11 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     project = configuration.getProject();
     targetField.setText(configuration.getTarget());
     argsField.setText(configuration.getCliArgs());
+    String deviceValue = configuration.getDevice();
+    if (StringUtil.isEmptyOrSpaces(deviceValue)) {
+      deviceValue = PatrolAppSettingsState.getInstance().lastDeviceId;
+    }
+    deviceField.setText(StringUtil.notNullize(deviceValue));
     workingDirField.setText(configuration.getWorkingDir());
     cliPathField.setText(configuration.getCliPath());
     commandModeBox.setSelectedItem(configuration.getCommandMode());
@@ -69,6 +75,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   protected void applyEditorTo(@NotNull PatrolRunConfiguration configuration) {
     configuration.setTarget(targetField.getText());
     configuration.setCliArgs(argsField.getText());
+    configuration.setDevice(deviceField.getText());
     configuration.setWorkingDir(workingDirField.getText());
     configuration.setCliPath(cliPathField.getText());
     configuration.setCommandMode((PatrolCommandMode) commandModeBox.getSelectedItem());
@@ -101,6 +108,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         null,
         FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withFileFilter(this::isPatrolCli)
     );
+    deviceField.getEmptyText().setText("Defaults to the IDE-selected device");
     commandModeBox.addActionListener(event -> updateOptionRowsVisibility());
 
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
@@ -110,6 +118,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JPanel panel = FormBuilder.createFormBuilder()
         .addLabeledComponent("Test target", targetField)
         .addLabeledComponent("Command", commandModeBox)
+        .addLabeledComponent("Device override", deviceField)
         .addLabeledComponent("Patrol CLI args", argsField)
         .addLabeledComponent("Working directory", workingDirField)
         .addLabeledComponent("Patrol CLI path", cliPathField)

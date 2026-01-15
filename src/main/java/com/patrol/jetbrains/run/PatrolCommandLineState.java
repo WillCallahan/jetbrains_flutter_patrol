@@ -50,6 +50,7 @@ public final class PatrolCommandLineState extends CommandLineState {
     if (!StringUtil.isEmptyOrSpaces(device)) {
       commandLine.addParameter("--device");
       commandLine.addParameter(device);
+      PatrolAppSettingsState.getInstance().lastDeviceId = device;
     }
     commandLine.addParameter("--target");
     commandLine.addParameter(configuration.getTarget());

@@ -13,6 +13,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] Modify options for Patrol CLI flags
 - [x] Mutually exclusive build mode flags enforced
 - [x] Options show tooltips
+- [x] Device override field in run configuration (defaults to last selected)
 - [ ] Hot reload integration (auto + manual)
 - [ ] Reload status feedback (console, status bar)
 - [ ] Test results in JetBrains test runner format
