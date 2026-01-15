@@ -9,6 +9,7 @@
   </description>
 
   <idea-version since-build="231"/>
+  <version>0.1.0</version>
 
   <depends>com.intellij.modules.platform</depends>
   <depends>io.flutter</depends>
