@@ -54,7 +54,9 @@ public final class PatrolCommandLineState extends CommandLineState {
 
     EnvironmentVariablesData envData = configuration.getEnvData();
     commandLine.getEnvironment().putAll(envData.getEnvs());
-    commandLine.setPassParentEnvironment(envData.isPassParentEnvs());
+    if (!envData.isPassParentEnvs()) {
+      commandLine.withParentEnvironmentType(com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType.NONE);
+    }
 
     KillableProcessHandler handler = new KillableProcessHandler(commandLine);
     if (configuration.isDiagnosticMode()) {
