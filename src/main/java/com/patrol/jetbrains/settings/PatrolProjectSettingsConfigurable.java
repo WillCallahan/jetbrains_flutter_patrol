@@ -35,6 +35,7 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
   private TextFieldWithBrowseButton defaultCliPathField;
   private JBCheckBox projectCliOverrideCheckBox;
   private TextFieldWithBrowseButton projectCliPathField;
+  private JBLabel cliPrecedenceHintLabel;
   private JBLabel pubspecValueLabel;
   private ActionLink openPubspecLink;
   private JBLabel pubspecWarningLabel;
@@ -63,6 +64,8 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
         null,
         FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
     );
+    cliPrecedenceHintLabel = new JBLabel("Precedence: Run configuration > Project override > IDE default > PATH");
+    cliPrecedenceHintLabel.setForeground(JBColor.GRAY);
 
     projectCliOverrideCheckBox = new JBCheckBox("Use project-specific Patrol CLI path");
     projectCliOverrideCheckBox.addActionListener(event -> updateProjectCliEnabled());
@@ -84,7 +87,7 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
 
     panel = FormBuilder.createFormBuilder()
         .addComponent(new TitledSeparator("IDE Defaults"))
-        .addComponent(createFieldPanel("Default Patrol CLI path", defaultCliPathField, null))
+        .addComponent(createFieldPanel("Default Patrol CLI path", defaultCliPathField, cliPrecedenceHintLabel))
         .addVerticalGap(8)
         .addComponent(new TitledSeparator("Project Overrides"))
         .addComponent(projectCliOverrideCheckBox)
@@ -154,6 +157,7 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     defaultCliPathField = null;
     projectCliOverrideCheckBox = null;
     projectCliPathField = null;
+    cliPrecedenceHintLabel = null;
     pubspecValueLabel = null;
     openPubspecLink = null;
     pubspecWarningLabel = null;

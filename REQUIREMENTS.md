@@ -88,6 +88,7 @@
   - [x] Used as the baseline for new Run/Debug configurations
   - [x] Run configuration override takes precedence when set
 - [x] **Project-Specific CLI Path**: Allow a per-project Patrol CLI override via checkbox
+  - [x] Show precedence hint: Run configuration → Project override → IDE default → PATH
 - [x] **Test Directory Detection**:
   - [x] Use a single test root configured by `patrol.test_directory` in `pubspec.yaml`
   - [x] Default to `patrol_test/` if `patrol.test_directory` is missing
