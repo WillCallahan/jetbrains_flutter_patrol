@@ -13,10 +13,12 @@
   - [ ] Configuration options for:
     - [x] Test target specification
     - [x] Command mode: `develop` (watch for changes) or `test` (single run)
+    - [x] Device selection passed as `--device`
     - [x] Custom Patrol CLI arguments
     - [x] Environment variables
     - [x] Working directory override
     - [ ] Display detected Patrol CLI version when CLI path is not set
+    - [x] Modify options list to enable Patrol CLI flags
 
 - [ ] **Gutter Icons**: Display run/debug icons in the editor gutter next to:
   - [ ] Individual `patrolTest()` declarations

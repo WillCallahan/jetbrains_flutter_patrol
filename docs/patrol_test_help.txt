@@ -1,40 +1,61 @@
-Develop integration tests with Hot Restart.
+Run integration tests.
 
-Usage: patrol develop [arguments]
--h, --help                                        Print this usage information.
--t, --target=<patrol_test/app_test.dart>          Integration test target to use as entrypoint.
---exclude=<patrol_test/flaky_test.dart>       Integration test targets to exclude.
---[no-]generate-bundle                        Whether to generate a bundled Dart test file.
-(defaults to on)
--d, --device=<all, emulator-5554, 'iPhone 14'>    Devices to run the tests on. If empty, the first device is used.
---[no-]debug                                  Build a debug version of your app (default mode)
---[no-]profile                                Build a version of your app for performance profiling.
---[no-]release                                Build a release version of your app
---flavor                                      Flavor of the app to run.
---dart-define=<KEY=VALUE>                     Additional key-value pairs that will be available to the app under test.
---dart-define-from-file=<config/test.json>    Environment configuration from a provided path that will be availableto the app under test.
---[no-]label                                  Display the label over the application under test.
-(defaults to on)
---test-server-port                            Port to use for server running in the test instrumentation app.
-(defaults to "8081")
---app-server-port                             Port to use for server running in the app under test.
-(defaults to "8082")
---tags=<(chrome || firefox) && !slow>         Tags to filter the tests by.
---[no-]hide-test-steps                        Hide test steps while running the tests.
---[no-]clear-test-steps                       Clear test steps after the test finishes.
-(defaults to on)
---[no-]check-compatibility                    Verify if the dependencies are compatible between each other.
-(defaults to on)
---[no-]uninstall                              Uninstall the app before and after the test finishes.
-(defaults to on)
---build-name=<1.2.3>                          Version name of the app.
---build-number=<123>                          Version code of the app.
---package-name=<pl.leancode.awesomeapp>       Package name of the Android app under test.
---bundle-id=<pl.leancode.AwesomeApp>          Bundle identifier of the iOS app under test.
---clear-permissions                           Clear permissions available through XCUIProtectedResource API before running each test.
---full-isolation                              (Experimental) Uninstall the app between test runs on iOS Simulator to achieve full isolation.
---ios=<17.5>                                  Pass iOS version. If empty, `latest` will be used. This flag only works with iOS simulator.
---[no-]open-devtools                          Automatically open Patrol extension in DevTools when ready.
+Usage: patrol test [arguments]
+-h, --help                                                               Print this usage information.
+-t, --target=<patrol_test/app_test.dart>                                 Integration test target to use as entrypoint.
+    --exclude=<patrol_test/flaky_test.dart>                              Integration test targets to exclude.
+    --[no-]generate-bundle                                               Whether to generate a bundled Dart test file.
+                                                                         (defaults to on)
+-d, --device=<all, emulator-5554, 'iPhone 14'>                           Devices to run the tests on. If empty, the first device is used.
+    --[no-]debug                                                         Build a debug version of your app (default mode)
+    --[no-]profile                                                       Build a version of your app for performance profiling.
+    --[no-]release                                                       Build a release version of your app
+    --flavor                                                             Flavor of the app to run.
+    --dart-define=<KEY=VALUE>                                            Additional key-value pairs that will be available to the app under test.
+    --dart-define-from-file=<config/test.json>                           Environment configuration from a provided path that will be availableto the app under test.
+    --[no-]label                                                         Display the label over the application under test.
+                                                                         (defaults to on)
+    --test-server-port                                                   Port to use for server running in the test instrumentation app.
+                                                                         (defaults to "8081")
+    --app-server-port                                                    Port to use for server running in the app under test.
+                                                                         (defaults to "8082")
+    --tags=<(chrome || firefox) && !slow>                                Tags to filter the tests by.
+    --exclude-tags=<safari>                                              Tags to exclude the tests by.
+    --[no-]coverage                                                      Generate coverage.
+    --coverage-ignore                                                    Exclude files from coverage using glob patterns.
+    --coverage-package=<package-name-regexp>                             A regular expression matching packages names to include in the coverage report (if coverage is enabled). If unset, matches the current package name.
+    --[no-]show-flutter-logs                                             Show Flutter logs while running the tests.
+    --[no-]hide-test-steps                                               Hide test steps while running the tests.
+    --[no-]clear-test-steps                                              Clear test steps after the test finishes.
+                                                                         (defaults to on)
+    --[no-]check-compatibility                                           Verify if the dependencies are compatible between each other.
+                                                                         (defaults to on)
+    --build-name=<1.2.3>                                                 Version name of the app.
+    --build-number=<123>                                                 Version code of the app.
+    --[no-]uninstall                                                     Uninstall the app before and after the test finishes.
+                                                                         (defaults to on)
+    --package-name=<pl.leancode.awesomeapp>                              Package name of the Android app under test.
+    --bundle-id=<pl.leancode.AwesomeApp>                                 Bundle identifier of the iOS app under test.
+    --clear-permissions                                                  Clear permissions available through XCUIProtectedResource API before running each test.
+    --full-isolation                                                     (Experimental) Uninstall the app between test runs on iOS Simulator to achieve full isolation.
+    --ios=<17.5>                                                         Pass iOS version. If empty, `latest` will be used. This flag only works with iOS simulator.
+    --web-results-dir=<test-results>                                     Directory where test results will be saved.
+    --web-report-dir=<playwright-report>                                 Directory where test reports will be saved.
+    --web-retries=<number>                                               Number of times to retry failed tests.
+    --web-video=<off | on | retain-on-failure | on-first-retry>          Video recording mode.
+    --web-timeout=<number>                                               Maximum time in milliseconds for single test execution.
+    --web-workers=<number>                                               Maximum number of parallel worker processes for test execution.
+    --web-reporter=<'["html", "json", "list"]'>                          Test reporters to use. JSON array of reporter names.
+    --web-locale=<en-US | pl-PL>                                         Locale for browser emulation.
+    --web-timezone=<Europe/Paris>                                        Timezone for browser emulation.
+    --web-color-scheme=<light | dark>                                    Preferred color scheme for browser emulation.
+    --web-geolocation=<'{"latitude": 51.5074, "longitude": -0.1278}'>    Geolocation for browser context. JSON object with latitude and longitude.
+    --web-permissions=<'["geolocation", ...]'>                           Permissions to grant to the browser context. JSON array of permission names.
+    --web-user-agent=<user agent string>                                 Custom user agent string for browser context.
+    --web-viewport=<'{"width": 1920, "height": 1080}'>                   Viewport size for browser context. JSON object with width and height.
+    --web-global-timeout=<number>                                        Maximum total time in milliseconds for the entire test run.
+    --web-shard=<1/4>                                                    Shard tests and execute only the selected shard. Specify in the format "current/total" (e.g., "1/4" for the first of 4 shards).
+    --web-headless=<true | false>                                        Whether to run browser in headless mode.
 
 Run "patrol help" to see global options.
-Read detailed docs at https://patrol.leancode.co/cli-commands/develop
+Read detailed docs at https://patrol.leancode.co/cli-commands/test

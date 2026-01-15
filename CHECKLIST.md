@@ -9,6 +9,8 @@ Legend: [x] done, [ ] pending, [~] partial
 - [ ] Debug mode with breakpoints
 - [~] Gutter icons for patrolTest(), groups, files
 - [x] Command mode: develop (watch) and test (single run)
+- [x] Device selection passed to Patrol CLI
+- [x] Modify options for Patrol CLI flags
 - [ ] Hot reload integration (auto + manual)
 - [ ] Reload status feedback (console, status bar)
 - [ ] Test results in JetBrains test runner format

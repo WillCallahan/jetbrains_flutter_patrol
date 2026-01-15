@@ -20,6 +20,7 @@ import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,7 +46,12 @@ public final class PatrolCommandLineState extends CommandLineState {
     } else {
       commandLine.addParameter("test");
     }
+    if (!StringUtil.isEmptyOrSpaces(configuration.getDevice())) {
+      commandLine.addParameter("--device");
+      commandLine.addParameter(configuration.getDevice().trim());
+    }
     commandLine.addParameter(configuration.getTarget());
+    addOptionParameters(commandLine);
 
     List<String> extraArgs = ParametersListUtil.parse(configuration.getCliArgs());
     commandLine.addParameters(extraArgs);
@@ -102,6 +108,88 @@ public final class PatrolCommandLineState extends CommandLineState {
         LOG.info("Detected Patrol CLI version " + version);
       }
     });
+  }
+
+  private void addOptionParameters(@NotNull com.intellij.execution.configurations.GeneralCommandLine commandLine) {
+    PatrolCommandMode mode = configuration.getCommandMode();
+    PatrolRunOption buildMode = selectBuildMode(mode);
+
+    if (buildMode != null) {
+      applyToggleOption(commandLine, buildMode);
+    }
+
+    for (PatrolRunOption option : PatrolRunOption.values()) {
+      if (option == PatrolRunOption.DEBUG || option == PatrolRunOption.PROFILE || option == PatrolRunOption.RELEASE) {
+        continue;
+      }
+      if (!option.appliesTo(mode)) {
+        continue;
+      }
+      if (!configuration.isOptionEnabled(option)) {
+        continue;
+      }
+      if (option.getType() == PatrolRunOptionType.TOGGLE) {
+        applyToggleOption(commandLine, option);
+      } else {
+        applyValueOption(commandLine, option);
+      }
+    }
+  }
+
+  private PatrolRunOption selectBuildMode(@NotNull PatrolCommandMode mode) {
+    PatrolRunOption[] priority = new PatrolRunOption[]{
+        PatrolRunOption.RELEASE,
+        PatrolRunOption.PROFILE,
+        PatrolRunOption.DEBUG
+    };
+    for (PatrolRunOption option : priority) {
+      if (option.appliesTo(mode) && configuration.isOptionEnabled(option)) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  private void applyToggleOption(@NotNull com.intellij.execution.configurations.GeneralCommandLine commandLine,
+                                 @NotNull PatrolRunOption option) {
+    String value = configuration.getOptionValue(option);
+    boolean enabledValue = Boolean.parseBoolean(value);
+    if (option.isNegatable()) {
+      commandLine.addParameter(enabledValue ? option.getFlag() : option.getNegatedFlag());
+    } else if (enabledValue) {
+      commandLine.addParameter(option.getFlag());
+    }
+  }
+
+  private void applyValueOption(@NotNull com.intellij.execution.configurations.GeneralCommandLine commandLine,
+                                @NotNull PatrolRunOption option) {
+    String rawValue = configuration.getOptionValue(option);
+    if (StringUtil.isEmptyOrSpaces(rawValue)) {
+      return;
+    }
+    if (option == PatrolRunOption.DART_DEFINE
+        || option == PatrolRunOption.EXCLUDE
+        || option == PatrolRunOption.COVERAGE_IGNORE) {
+      List<String> values = splitMultiValue(rawValue);
+      for (String value : values) {
+        commandLine.addParameter(option.getFlag());
+        commandLine.addParameter(value);
+      }
+      return;
+    }
+    commandLine.addParameter(option.getFlag());
+    commandLine.addParameter(rawValue);
+  }
+
+  private List<String> splitMultiValue(@NotNull String rawValue) {
+    List<String> values = new ArrayList<>();
+    for (String part : rawValue.split("[,\n]")) {
+      String trimmed = part.trim();
+      if (!trimmed.isEmpty()) {
+        values.add(trimmed);
+      }
+    }
+    return values;
   }
 
   private void attachDiagnosticLogging(@NotNull ProcessHandler handler,
