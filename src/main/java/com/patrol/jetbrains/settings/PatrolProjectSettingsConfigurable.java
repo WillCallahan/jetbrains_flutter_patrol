@@ -14,14 +14,17 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.Window;
 
 public final class PatrolProjectSettingsConfigurable implements SearchableConfigurable {
   private static final Icon PATROL_ICON = IconLoader.getIcon("/icons/patrol.svg", PatrolProjectSettingsConfigurable.class);
@@ -82,9 +85,11 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     panel = FormBuilder.createFormBuilder()
         .addComponent(new TitledSeparator("IDE Defaults"))
         .addComponent(createFieldPanel("Default Patrol CLI path", defaultCliPathField, null))
+        .addVerticalGap(8)
         .addComponent(new TitledSeparator("Project Overrides"))
         .addComponent(projectCliOverrideCheckBox)
         .addComponent(createFieldPanel("Project Patrol CLI path", projectCliPathField, null))
+        .addVerticalGap(8)
         .addComponent(new TitledSeparator("Patrol Test Directory"))
         .addComponent(createFieldPanel("Patrol test directory", pubspecValueLabel, openPubspecLink))
         .addComponent(pubspecWarningLabel)
@@ -181,10 +186,10 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     }
     String value = PubspecUtil.readPatrolTestDirectory(project).orElse("");
     if (StringUtil.isEmptyOrSpaces(value)) {
-      pubspecValueLabel.setText("Set patrol.test_directory in pubspec.yaml (currently using integration_test).");
-    } else {
-      pubspecValueLabel.setText("Configured via patrol.test_directory: " + value.trim());
+      pubspecValueLabel.setText("Set patrol.test_directory in pubspec.yaml (currently using patrol_test).");
+      return;
     }
+    pubspecValueLabel.setText("Configured via patrol.test_directory: " + value.trim());
   }
 
   private void openPubspec() {
@@ -195,6 +200,17 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(basePath + "/pubspec.yaml");
     if (file != null) {
       FileEditorManager.getInstance(project).openFile(file, true);
+      closeSettingsWindow();
+    }
+  }
+
+  private void closeSettingsWindow() {
+    if (panel == null) {
+      return;
+    }
+    Window window = SwingUtilities.getWindowAncestor(panel);
+    if (window != null) {
+      window.dispose();
     }
   }
 
@@ -203,9 +219,14 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
                                            @Nullable JComponent helper) {
     JPanel container = new JPanel();
     container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-    container.add(new JBLabel(labelText));
+    container.setBorder(JBUI.Borders.empty(0, 0, 8, 0));
+    JBLabel label = new JBLabel(labelText);
+    label.setAlignmentX(0f);
+    field.setAlignmentX(0f);
+    container.add(label);
     container.add(field);
     if (helper != null) {
+      helper.setAlignmentX(0f);
       container.add(helper);
     }
     return container;

@@ -90,7 +90,7 @@
 - [x] **Project-Specific CLI Path**: Allow a per-project Patrol CLI override via checkbox
 - [x] **Test Directory Detection**:
   - [x] Use a single test root configured by `patrol.test_directory` in `pubspec.yaml`
-  - [x] Default to `integration_test/` if `patrol.test_directory` is missing
+  - [x] Default to `patrol_test/` if `patrol.test_directory` is missing
   - [x] Merge behavior:
     - [x] `patrol.test_directory` overrides the default root
   - [x] Scope:

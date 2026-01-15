@@ -1,15 +1,11 @@
 package com.patrol.jetbrains.discovery;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PubspecUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 public final class PatrolTestUtil {
   private PatrolTestUtil() {
@@ -39,21 +35,12 @@ public final class PatrolTestUtil {
       return false;
     }
     String normalized = path.replace('\\', '/');
-    String marker = normalizeRoot(getPatrolTestRoot(project));
+    String marker = normalizeRoot(PubspecUtil.resolvePatrolTestRoot(project));
     return marker != null && normalized.contains(marker);
   }
 
   public static @Nullable String defaultWorkingDir(@NotNull Project project) {
     return project.getBasePath();
-  }
-
-  public static @NotNull String getPatrolTestRoot(@NotNull Project project) {
-    Optional<String> pubspec = PubspecUtil.readPatrolTestDirectory(project);
-    if (pubspec.isPresent() && !StringUtil.isEmptyOrSpaces(pubspec.get())) {
-      return pubspec.get().trim();
-    }
-    String fallback = PatrolAppSettingsState.getInstance().defaultTestRoot;
-    return StringUtil.isEmptyOrSpaces(fallback) ? "integration_test" : fallback.trim();
   }
 
   private static @Nullable String normalizeRoot(@NotNull String root) {

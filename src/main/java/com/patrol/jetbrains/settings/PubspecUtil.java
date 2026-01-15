@@ -1,6 +1,7 @@
 package com.patrol.jetbrains.settings;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,11 +43,10 @@ public final class PubspecUtil {
   }
 
   public static @Nullable String validatePatrolTestDirectory(@NotNull Project project) {
-    Optional<String> value = readPatrolTestDirectory(project);
-    if (value.isEmpty()) {
-      return "patrol.test_directory is missing in pubspec.yaml";
+    String pathValue = resolvePatrolTestRoot(project);
+    if (StringUtil.isEmptyOrSpaces(pathValue)) {
+      return null;
     }
-    String pathValue = value.get();
     Path base = resolveProjectBase(project);
     if (base == null) {
       return null;
@@ -59,6 +59,15 @@ public final class PubspecUtil {
       return "patrol.test_directory is not a directory: " + pathValue;
     }
     return null;
+  }
+
+  public static @NotNull String resolvePatrolTestRoot(@NotNull Project project) {
+    Optional<String> value = readPatrolTestDirectory(project);
+    if (value.isPresent() && !StringUtil.isEmptyOrSpaces(value.get())) {
+      return value.get().trim();
+    }
+    String fallback = PatrolAppSettingsState.getInstance().defaultTestRoot;
+    return StringUtil.isEmptyOrSpaces(fallback) ? "patrol_test" : fallback.trim();
   }
 
   private static Optional<String> parsePatrolTestDirectory(@NotNull String content) {

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "PatrolAppSettings", storages = @Storage("patrol.xml"))
 public final class PatrolAppSettingsState implements PersistentStateComponent<PatrolAppSettingsState> {
   public String defaultCliPath = "";
-  public String defaultTestRoot = "integration_test";
+  public String defaultTestRoot = "patrol_test";
 
   public static PatrolAppSettingsState getInstance() {
     return ApplicationManager.getApplication().getService(PatrolAppSettingsState.class);
@@ -27,7 +27,7 @@ public final class PatrolAppSettingsState implements PersistentStateComponent<Pa
   public void loadState(@NotNull PatrolAppSettingsState state) {
     this.defaultCliPath = state.defaultCliPath;
     this.defaultTestRoot = state.defaultTestRoot == null || state.defaultTestRoot.isEmpty()
-        ? "integration_test"
+        ? "patrol_test"
         : state.defaultTestRoot;
   }
 }
