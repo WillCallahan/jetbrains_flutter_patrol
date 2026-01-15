@@ -24,6 +24,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -120,7 +121,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         .addLabeledComponent("Test target", targetField)
         .addLabeledComponent("Command", commandModeBox)
         .addLabeledComponent("Device override", deviceField)
-        .addLabeledComponent("Patrol CLI args", argsField)
+        .addComponent(createWideFieldPanel("Patrol CLI args", argsField))
         .addLabeledComponent("Working directory", workingDirField)
         .addLabeledComponent("Patrol CLI path", cliPathField)
         .addComponent(modifyOptionsLink)
@@ -175,6 +176,19 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       text = "Not found (checks PATH and ~/.pub-cache/bin)";
     }
     cliPathTextField.getEmptyText().setText(text);
+  }
+
+  private JComponent createWideFieldPanel(@NotNull String labelText, @NotNull JComponent field) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    JBLabel label = new JBLabel(labelText);
+    label.setAlignmentX(0f);
+    field.setAlignmentX(0f);
+    Dimension preferred = field.getPreferredSize();
+    field.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferred.height));
+    panel.add(label);
+    panel.add(field);
+    return panel;
   }
 
   private void buildOptionsPanel() {
