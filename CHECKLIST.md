@@ -61,6 +61,8 @@ Legend: [x] done, [ ] pending, [~] partial
 - [x] Maven `pom.xml` and standard source layout
 - [x] `plugin.xml` in `src/main/resources/META-INF`
 - [x] CLI path resolution (override + PATH)
+- [x] IDE settings (default CLI path + test root configuration)
+- [x] Pubspec `patrol.test_directory` warning in settings
 - [ ] CLI stdout/stderr separation
 - [x] Configurable working directory
 - [x] JetBrains logging APIs

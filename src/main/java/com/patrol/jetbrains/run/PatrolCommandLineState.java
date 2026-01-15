@@ -15,6 +15,7 @@ import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.PatrolNotifications;
 import com.patrol.jetbrains.cli.PatrolCliVersionChecker;
 import com.patrol.jetbrains.cli.SemanticVersion;
+import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -70,6 +71,11 @@ public final class PatrolCommandLineState extends CommandLineState {
     Path overridePath = null;
     if (!StringUtil.isEmptyOrSpaces(configuration.getCliPath())) {
       overridePath = Path.of(configuration.getCliPath());
+    } else {
+      String defaultPath = PatrolAppSettingsState.getInstance().defaultCliPath;
+      if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
+        overridePath = Path.of(defaultPath);
+      }
     }
 
     Optional<Path> resolved = new DefaultPatrolCliLocator(overridePath).findPatrolCli();

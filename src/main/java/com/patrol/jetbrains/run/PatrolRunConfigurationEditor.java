@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
+import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComboBox;
@@ -105,9 +106,22 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
 
     String text;
-    java.util.Optional<java.nio.file.Path> resolved = new DefaultPatrolCliLocator(null).findPatrolCli();
+    String defaultPath = PatrolAppSettingsState.getInstance().defaultCliPath;
+    java.nio.file.Path preferred = null;
+    if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
+      preferred = java.nio.file.Path.of(defaultPath.trim());
+    }
+    java.util.Optional<java.nio.file.Path> resolved = new DefaultPatrolCliLocator(preferred).findPatrolCli();
     if (resolved.isPresent()) {
-      text = "Detected: " + resolved.get().toString();
+      if (preferred != null && resolved.get().equals(preferred)) {
+        text = "Default: " + resolved.get();
+      } else if (preferred != null) {
+        text = "Detected: " + resolved.get() + " (default not found)";
+      } else {
+        text = "Detected: " + resolved.get();
+      }
+    } else if (preferred != null) {
+      text = "Default not found: " + preferred;
     } else {
       text = "Not found (checks PATH and ~/.pub-cache/bin)";
     }

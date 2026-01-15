@@ -17,6 +17,12 @@
     <configurationType implementation="com.patrol.jetbrains.run.PatrolRunConfigurationType"/>
     <runConfigurationProducer implementation="com.patrol.jetbrains.run.PatrolRunConfigurationProducer"/>
     <runLineMarkerContributor implementation="com.patrol.jetbrains.run.PatrolRunLineMarkerContributor"/>
+    <applicationConfigurable id="patrol.settings"
+                             displayName="Patrol"
+                             instance="com.patrol.jetbrains.settings.PatrolAppSettingsConfigurable"/>
+    <projectConfigurable id="patrol.project.settings"
+                         displayName="Patrol"
+                         instance="com.patrol.jetbrains.settings.PatrolProjectSettingsConfigurable"/>
     <notificationGroup id="Patrol"
                        displayType="BALLOON"
                        isLogByDefault="true"/>

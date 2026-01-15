@@ -82,23 +82,23 @@
 - [ ] **Version Checks**: Detect Patrol CLI and Flutter SDK versions at setup time
 
 ### 5. IDE Settings
-- [ ] **Patrol Settings Page**: Provide a plugin settings page under IDE Settings
-- [ ] **CLI Default Path**: Allow configuring a default Patrol CLI path at the IDE level
-  - [ ] Used as the baseline for new Run/Debug configurations
-  - [ ] Run configuration override takes precedence when set
-- [ ] **Test Directory Detection**:
-  - [ ] Allow users to configure which directory paths are treated as Patrol test roots
-  - [ ] Defaults to `integration_test/` and the value from `pubspec.yaml` (`patrol.test_directory`)
-  - [ ] Merge behavior:
-    - [ ] If `patrol.test_directory` is present, include it in detection by default
-    - [ ] User-configured paths are additive unless explicitly disabled
-  - [ ] Scope:
-    - [ ] IDE settings define global defaults
-    - [ ] Project settings can override or disable specific paths
-- [ ] **Pubspec Validation**:
-  - [ ] Read `patrol.test_directory` from `pubspec.yaml`
-  - [ ] Warn if the value is missing, invalid, or points to a non-existent directory
-  - [ ] Invalid values do not block discovery of other configured paths
+- [x] **Patrol Settings Page**: Provide a plugin settings page under IDE Settings
+- [x] **CLI Default Path**: Allow configuring a default Patrol CLI path at the IDE level
+  - [x] Used as the baseline for new Run/Debug configurations
+  - [x] Run configuration override takes precedence when set
+- [x] **Test Directory Detection**:
+  - [x] Allow users to configure which directory paths are treated as Patrol test roots
+  - [x] Defaults to `integration_test/`, `test/`, and the value from `pubspec.yaml` (`patrol.test_directory`)
+  - [x] Merge behavior:
+    - [x] If `patrol.test_directory` is present, include it in detection by default
+    - [x] User-configured paths are additive unless explicitly disabled
+  - [x] Scope:
+    - [x] IDE settings define global defaults
+    - [x] Project settings can override or disable specific paths
+- [x] **Pubspec Validation**:
+  - [x] Read `patrol.test_directory` from `pubspec.yaml`
+  - [x] Warn if the value is missing, invalid, or points to a non-existent directory
+  - [x] Invalid values do not block discovery of other configured paths
 
 ## Non-Functional Requirements
 
@@ -163,7 +163,7 @@
 - [ ] Capture stdout/stderr separately for structured parsing
 - [x] Support configurable working directory per run configuration
 - [ ] Show detected Patrol CLI version in the run configuration UI when not overridden
-- [ ] Apply the IDE-level default Patrol CLI path when a run configuration has no override
+- [x] Apply the IDE-level default Patrol CLI path when a run configuration has no override
 
 ### Testing
 - [ ] Unit tests for parsing Patrol output into the test runner model
@@ -213,15 +213,15 @@
 **Recommendation: Java**
 
 ### Rationale:
-- [ ] **Broader compatibility**: Java plugins work across all JetBrains IDEs without Kotlin runtime dependencies
-- [ ] **Simpler build setup**: No Kotlin compiler configuration needed
-- [ ] **Easier debugging**: More straightforward for developers unfamiliar with Kotlin
-- [ ] **JetBrains SDK examples**: Most official documentation uses Java
-- [ ] **Your preference**: Aligns with your stated lean towards Java
+- **Broader compatibility**: Java plugins work across all JetBrains IDEs without Kotlin runtime dependencies
+- **Simpler build setup**: No Kotlin compiler configuration needed
+- **Easier debugging**: More straightforward for developers unfamiliar with Kotlin
+- **JetBrains SDK examples**: Most official documentation uses Java
+- **Your preference**: Aligns with your stated lean towards Java
 
 ### Trade-offs:
-- [ ] More verbose than Kotlin (but manageable for plugin development)
-- [ ] Kotlin would offer null-safety and modern language features
-- [ ] However, Java 11+ provides sufficient modern features for this use case
+- More verbose than Kotlin (but manageable for plugin development)
+- Kotlin would offer null-safety and modern language features
+- However, Java 11+ provides sufficient modern features for this use case
 
 **Decision: Use Java for this plugin.**
