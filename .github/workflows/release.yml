@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g. 0.2.0). Defaults to the pom version.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            # v0.2.0 -> 0.2.0
+            VERSION="${GITHUB_REF_NAME#v}"
+          elif [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)"
+            VERSION="${VERSION%-SNAPSHOT}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${VERSION}"
+
+      - name: Stamp version into pom.xml and plugin.xml
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mvn -B versions:set -DnewVersion="${VERSION}" -DgenerateBackupPoms=false
+          # Keep the plugin descriptor in sync with the released version.
+          python3 - "$VERSION" <<'PY'
+          import re, sys, pathlib
+          version = sys.argv[1]
+          p = pathlib.Path("src/main/resources/META-INF/plugin.xml")
+          s = p.read_text()
+          s, n = re.subn(r"<version>[^<]*</version>", f"<version>{version}</version>", s, count=1)
+          if n != 1:
+              raise SystemExit("Failed to update <version> in plugin.xml")
+          p.write_text(s)
+          print(f"plugin.xml version set to {version}")
+          PY
+
+      - name: Build
+        run: mvn -B package
+
+      - name: Assemble distribution zip
+        id: dist
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          JAR="target/jetbrains-flutter-patrol-${VERSION}.jar"
+          test -f "$JAR" || { echo "Expected jar not found: $JAR"; ls -la target; exit 1; }
+
+          # JetBrains Marketplace / "Install Plugin from Disk" layout:
+          #   <plugin name>/lib/<jar>
+          PLUGIN_DIR="dist/Patrol Flutter/lib"
+          mkdir -p "$PLUGIN_DIR"
+          cp "$JAR" "$PLUGIN_DIR/"
+
+          ZIP="patrol-flutter-${VERSION}.zip"
+          (cd dist && zip -r "../${ZIP}" "Patrol Flutter")
+
+          cp "$JAR" "patrol-flutter-${VERSION}.jar"
+
+          echo "zip=${ZIP}" >> "$GITHUB_OUTPUT"
+          echo "jar=patrol-flutter-${VERSION}.jar" >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: patrol-flutter-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.dist.outputs.zip }}
+            ${{ steps.dist.outputs.jar }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 - "$VERSION" <<'PY' > release-notes.md || true
+          import re, sys, pathlib
+          version = sys.argv[1]
+          text = pathlib.Path("CHANGELOG.md").read_text()
+          # Grab everything under "## [<version>]" up to the next "## " heading.
+          m = re.search(
+              r"^##\s*\[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^##\s|\Z)",
+              text, re.S | re.M)
+          if m:
+              sys.stdout.write(m.group(1).strip() + "\n")
+          PY
+          if [ -s release-notes.md ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "Release notes taken from CHANGELOG.md:"
+            cat release-notes.md
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No CHANGELOG.md section for ${VERSION}; falling back to generated notes."
+          fi
+
+      - name: Publish GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ZIP: ${{ steps.dist.outputs.zip }}
+          JAR: ${{ steps.dist.outputs.jar }}
+          HAS_NOTES: ${{ steps.notes.outputs.found }}
+        run: |
+          set -euo pipefail
+          if [ "${HAS_NOTES}" = "true" ]; then
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "Patrol Flutter ${VERSION}" \
+              --notes-file release-notes.md \
+              "${ZIP}" "${JAR}"
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "Patrol Flutter ${VERSION}" \
+              --generate-notes \
+              "${ZIP}" "${JAR}"
+          fi

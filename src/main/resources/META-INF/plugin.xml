@@ -8,8 +8,8 @@
     Run and debug Patrol Flutter tests from JetBrains IDEs.
   </description>
 
-  <idea-version since-build="231"/>
-  <version>0.1.0</version>
+  <idea-version since-build="242"/>
+  <version>0.2.0</version>
 
   <depends>com.intellij.modules.platform</depends>
   <depends>io.flutter</depends>

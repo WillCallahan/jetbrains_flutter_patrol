@@ -55,7 +55,7 @@ Legend: [x] done, [ ] pending, [~] partial
 - [ ] UI remains responsive
 
 ## Compatibility
-- [ ] IntelliJ 2023.1+ enforced
+- [x] IntelliJ 2024.2-2026.2 enforced (since-build 242, verified with IntelliJ Plugin Verifier)
 - [ ] Android Studio Flamingo+
 - [ ] Flutter SDK 3.0+
 - [ ] Patrol 2.0+

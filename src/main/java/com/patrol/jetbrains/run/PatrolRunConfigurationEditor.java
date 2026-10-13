@@ -115,6 +115,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       }
     });
     cliPathTextField.getEmptyText().setText("Auto-detecting Patrol CLI...");
+    // NOTE: the 2-arg addBrowseFolderListener(Project, FileChooserDescriptor) overload only exists
+    // from 2024.3 onwards. Keep this deprecated overload while since-build is 242.
     cliPathField.addBrowseFolderListener(
         "Select Patrol CLI",
         "Choose the Patrol CLI executable.",

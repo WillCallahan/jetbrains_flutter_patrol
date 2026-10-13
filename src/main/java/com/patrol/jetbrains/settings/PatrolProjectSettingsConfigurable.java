@@ -57,6 +57,8 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
   @Override
   public @Nullable JComponent createComponent() {
     defaultCliPathField = new TextFieldWithBrowseButton();
+    // NOTE: the 2-arg addBrowseFolderListener(Project, FileChooserDescriptor) overload only exists
+    // from 2024.3 onwards. Keep this deprecated overload while since-build is 242.
     defaultCliPathField.addBrowseFolderListener(
         "Select Patrol CLI",
         "Choose the default Patrol CLI executable.",

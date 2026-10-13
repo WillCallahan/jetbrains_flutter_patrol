@@ -4,15 +4,19 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.icons.AllIcons;
@@ -99,7 +103,12 @@ public final class PatrolCommandLineState extends CommandLineState {
       @Override
       public void update(@NotNull AnActionEvent event) {
         Presentation presentation = event.getPresentation();
-        presentation.setEnabled(processHandler.isProcessTerminated() == false);
+        presentation.setEnabled(!processHandler.isProcessTerminated());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     AnAction[] combined = new AnAction[base.length + 1];
@@ -317,10 +326,9 @@ public final class PatrolCommandLineState extends CommandLineState {
     LOG.info("Patrol CLI: " + commandLine.getExePath());
     LOG.info("Patrol working dir: " + commandLine.getWorkDirectory());
     LOG.info("Patrol args: " + String.join(" ", commandLine.getParametersList().getParameters()));
-    handler.addProcessListener(new com.intellij.execution.process.ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
       @Override
-      public void onTextAvailable(com.intellij.execution.process.ProcessEvent event,
-                                  com.intellij.openapi.util.Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
           LOG.warn(event.getText());
         } else {
@@ -329,7 +337,7 @@ public final class PatrolCommandLineState extends CommandLineState {
       }
 
       @Override
-      public void processTerminated(com.intellij.execution.process.ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         LOG.info("Patrol process exited with code " + event.getExitCode());
       }
     });
