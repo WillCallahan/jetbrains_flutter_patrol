@@ -10,13 +10,19 @@ Run and debug Patrol Flutter tests directly from JetBrains IDEs, with a fast fee
 
 ## Requirements
 - IntelliJ IDEA 2024.2+ (build 242) through 2026.2 (build 262), or a matching Android Studio
-- JDK 21 (to build; the IDE supplies its own runtime)
+- JDK 25 to build (the IDE supplies its own runtime at install time)
 - Maven 3.8+
 - Flutter SDK 3.0+
 - Patrol CLI 2.0+
 
 The plugin is built against IntelliJ Platform 2026.2.3 and verified with the
 IntelliJ Plugin Verifier at both ends of that range. See `CHANGELOG.md` for details.
+
+Note the two different Java versions: the 2026.2 platform jars are Java 25 bytecode, so
+**javac must be JDK 25 or newer to read them**. The plugin itself is still compiled to
+Java 21 (`maven.compiler.release`), which is what allows a single build to run on every
+IDE from 2024.2 through 2026.2. Building with JDK 21 fails with
+`class file has wrong version 69.0, should be 65.0`.
 
 ## Project Layout
 - `src/main/java` - plugin sources

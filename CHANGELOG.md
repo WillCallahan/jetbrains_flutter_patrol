@@ -13,7 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build against IntelliJ Platform **2026.2.3** (build `262.10968.63`), up from 2023.1.7.
 - Raised the minimum supported IDE to **2024.2** (`since-build=242`), up from 2023.1 (`231`).
   This is the first build that ships a Java 21 runtime, which the plugin now requires.
-- Compile with **Java 21** (`maven.compiler.release`), up from Java 11.
+- Compile with **Java 21** (`maven.compiler.release`), up from Java 11. The emitted bytecode
+  stays at Java 21 so that one build runs across the whole 242-262 range.
+- Building now requires **JDK 25 or newer**, up from JDK 11. The 2026.2 platform jars are
+  Java 25 bytecode (class file version 69), which javac must be able to read; JDK 21 fails
+  with `class file has wrong version 69.0, should be 65.0`. This is a build-time requirement
+  only and does not affect which IDEs the plugin runs on.
 
 ### Fixed
 - Replaced the deprecated `ProcessAdapter` with the `ProcessListener` interface in diagnostic logging.
