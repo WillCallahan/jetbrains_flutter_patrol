@@ -1,6 +1,9 @@
 package com.patrol.jetbrains.settings;
 
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -44,6 +47,28 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
     this.project = project;
   }
 
+  /**
+   * Opens a file chooser for a CLI path field. Done by hand because the
+   * {@code addBrowseFolderListener} overload taking a title and description is scheduled for
+   * removal, and its replacement does not exist before 2024.3.
+   */
+  private void browseForCli(@NotNull TextFieldWithBrowseButton field,
+                            @NotNull String title,
+                            @NotNull String description) {
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        .withTitle(title)
+        .withDescription(description);
+    VirtualFile toSelect = null;
+    String current = field.getText();
+    if (!StringUtil.isEmptyOrSpaces(current)) {
+      toSelect = LocalFileSystem.getInstance().findFileByPath(current.trim().replace('\\', '/'));
+    }
+    VirtualFile chosen = FileChooser.chooseFile(descriptor, project, toSelect);
+    if (chosen != null) {
+      field.setText(FileUtil.toSystemDependentName(chosen.getPath()));
+    }
+  }
+
   @Override
   public @NotNull String getId() {
     return "patrol.project.settings";
@@ -57,26 +82,14 @@ public final class PatrolProjectSettingsConfigurable implements SearchableConfig
   @Override
   public @Nullable JComponent createComponent() {
     defaultCliPathField = new TextFieldWithBrowseButton();
-    // NOTE: the 2-arg addBrowseFolderListener(Project, FileChooserDescriptor) overload only exists
-    // from 2024.3 onwards. Keep this deprecated overload while since-build is 242.
-    defaultCliPathField.addBrowseFolderListener(
-        "Select Patrol CLI",
-        "Choose the default Patrol CLI executable.",
-        null,
-        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-    );
+    defaultCliPathField.addActionListener(event -> browseForCli(defaultCliPathField, "Select Patrol CLI", "Choose the default Patrol CLI executable."));
     cliPrecedenceHintLabel = new JBLabel("Precedence: Run configuration > Project override > IDE default > PATH");
     cliPrecedenceHintLabel.setForeground(JBColor.GRAY);
 
     projectCliOverrideCheckBox = new JBCheckBox("Use project-specific Patrol CLI path");
     projectCliOverrideCheckBox.addActionListener(event -> updateProjectCliEnabled());
     projectCliPathField = new TextFieldWithBrowseButton();
-    projectCliPathField.addBrowseFolderListener(
-        "Select Project Patrol CLI",
-        "Choose the Patrol CLI executable for this project.",
-        null,
-        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-    );
+    projectCliPathField.addActionListener(event -> browseForCli(projectCliPathField, "Select Project Patrol CLI", "Choose the Patrol CLI executable for this project."));
 
     pubspecValueLabel = new JBLabel();
     openPubspecLink = new ActionLink("Open pubspec.yaml", (java.awt.event.ActionListener) event -> openPubspec());

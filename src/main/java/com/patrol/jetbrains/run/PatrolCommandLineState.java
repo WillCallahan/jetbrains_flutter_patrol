@@ -24,6 +24,7 @@ import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.PatrolNotifications;
 import com.patrol.jetbrains.cli.PatrolCliVersionChecker;
 import com.patrol.jetbrains.cli.SemanticVersion;
+import com.patrol.jetbrains.discovery.PatrolTestUtil;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +71,20 @@ public final class PatrolCommandLineState extends CommandLineState {
     List<String> extraArgs = ParametersListUtil.parse(configuration.getCliArgs());
     commandLine.addParameters(extraArgs);
 
-    if (!StringUtil.isEmptyOrSpaces(configuration.getWorkingDir())) {
-      commandLine.setWorkDirectory(configuration.getWorkingDir());
+    // A run configuration created by hand has no working directory. Without one the process
+    // inherits the IDE's working directory, which is not the project root when the IDE was
+    // launched from Finder or the Dock. Version managers such as fvm resolve the SDK from
+    // .fvmrc in the project root, and when they cannot they exit 0 having printed nothing,
+    // which surfaces much later as an unrelated-looking JSON parse error from the Patrol CLI.
+    String workingDir = configuration.getWorkingDir();
+    if (StringUtil.isEmptyOrSpaces(workingDir)) {
+      workingDir = PatrolTestUtil.defaultWorkingDir(configuration.getProject());
+    }
+    if (!StringUtil.isEmptyOrSpaces(workingDir)) {
+      commandLine.setWorkDirectory(workingDir);
+      if (configuration.isDiagnosticMode()) {
+        LOG.info("Patrol working directory: " + workingDir);
+      }
     }
 
     EnvironmentVariablesData envData = configuration.getEnvData();

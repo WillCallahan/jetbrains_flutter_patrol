@@ -17,6 +17,10 @@ public final class PatrolRunConfigurationFactory extends ConfigurationFactory {
     this.defaultMode = defaultMode;
   }
 
+  public @NotNull PatrolCommandMode getDefaultMode() {
+    return defaultMode;
+  }
+
   @Override
   public @NotNull String getId() {
     return PatrolRunConfigurationType.ID + "." + defaultMode.name().toLowerCase();

@@ -1,5 +1,6 @@
 package com.patrol.jetbrains.run;
 
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.IconUtil;
@@ -16,6 +17,17 @@ public final class PatrolRunConfigurationType extends ConfigurationTypeBase {
     super(ID, "Patrol Test", "Run Patrol Flutter tests", SMALL_PATROL_ICON);
     addFactory(new PatrolRunConfigurationFactory(this, "Patrol Test", PatrolCommandMode.TEST));
     addFactory(new PatrolRunConfigurationFactory(this, "Patrol Develop", PatrolCommandMode.DEVELOP));
+  }
+
+  /** Returns the factory backing {@code mode}, falling back to the first factory. */
+  public @NotNull ConfigurationFactory getFactory(@NotNull PatrolCommandMode mode) {
+    for (ConfigurationFactory factory : getConfigurationFactories()) {
+      if (factory instanceof PatrolRunConfigurationFactory patrolFactory
+          && patrolFactory.getDefaultMode() == mode) {
+        return factory;
+      }
+    }
+    return getConfigurationFactories()[0];
   }
 
   @NotNull

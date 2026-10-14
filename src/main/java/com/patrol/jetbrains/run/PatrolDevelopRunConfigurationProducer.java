@@ -1,7 +1,8 @@
 package com.patrol.jetbrains.run;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.actions.LazyRunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -9,9 +10,10 @@ import com.intellij.psi.PsiFile;
 import com.patrol.jetbrains.discovery.PatrolTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-public final class PatrolDevelopRunConfigurationProducer extends RunConfigurationProducer<PatrolRunConfiguration> {
-  public PatrolDevelopRunConfigurationProducer() {
-    super(PatrolRunConfigurationType.getInstance());
+public final class PatrolDevelopRunConfigurationProducer extends LazyRunConfigurationProducer<PatrolRunConfiguration> {
+  @Override
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
+    return PatrolRunConfigurationType.getInstance().getFactory(PatrolCommandMode.DEVELOP);
   }
 
   @Override

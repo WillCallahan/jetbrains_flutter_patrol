@@ -5,7 +5,11 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
@@ -63,7 +67,9 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
           + "Use this for flags that have no field above.</html>";
   private static final String WORKING_DIR_TOOLTIP =
       "<html>Directory the Patrol CLI runs in. Defaults to the project root.<br><br>"
-          + "Set this when the Flutter package is in a subdirectory of the project.</html>";
+          + "Set this when the Flutter package is in a subdirectory of the project.<br><br>"
+          + "Version managers such as fvm resolve the SDK from this directory, so it must be the "
+          + "directory containing <code>pubspec.yaml</code> (and <code>.fvmrc</code>, if you use fvm).</html>";
   private static final String CLI_PATH_TOOLTIP =
       "<html>Overrides which Patrol CLI executable is used for this run configuration only.<br><br>"
           + "Resolution order: this field &rarr; project override &rarr; IDE default &rarr; "
@@ -95,6 +101,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   @Override
   protected void resetEditorFrom(@NotNull PatrolRunConfiguration configuration) {
     project = configuration.getProject();
+    updateWorkingDirHint();
     populateTargets();
     setTargetText(toDisplayPath(configuration.getTarget()));
     argsField.setText(configuration.getCliArgs());
@@ -144,14 +151,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       }
     });
     cliPathTextField.getEmptyText().setText("Auto-detecting Patrol CLI...");
-    // NOTE: the 2-arg addBrowseFolderListener(Project, FileChooserDescriptor) overload only exists
-    // from 2024.3 onwards. Keep this deprecated overload while since-build is 242.
-    cliPathField.addBrowseFolderListener(
-        "Select Patrol CLI",
-        "Choose the Patrol CLI executable.",
-        null,
-        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withFileFilter(this::isPatrolCli)
-    );
+    cliPathField.addActionListener(event -> browseForCli(
+        cliPathField, "Select Patrol CLI", "Choose the Patrol CLI executable.", true));
     deviceField.getEmptyText().setText("Defaults to the IDE-selected device");
     commandModeBox.addActionListener(event -> updateOptionRowsVisibility());
 
@@ -262,6 +263,13 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     return trimmed;
   }
 
+  /** Blank means "project root", so say which directory that actually is. */
+  private void updateWorkingDirHint() {
+    Path base = projectBase();
+    workingDirField.getEmptyText().setText(
+        base == null ? "Defaults to the project root" : "Defaults to the project root: " + base);
+  }
+
   private @Nullable Path projectBase() {
     String basePath = project == null ? null : project.getBasePath();
     if (StringUtil.isEmptyOrSpaces(basePath)) {
@@ -272,6 +280,37 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     } catch (java.nio.file.InvalidPathException e) {
       return null;
     }
+  }
+
+  /**
+   * Opens a file chooser for a Patrol CLI path field.
+   *
+   * <p>Done by hand rather than via {@code addBrowseFolderListener}: the overload taking a title
+   * and description is scheduled for removal, and the replacement that moves them onto the
+   * descriptor does not exist before 2024.3, which is below this plugin's since-build.
+   */
+  private void browseForCli(@NotNull TextFieldWithBrowseButton field,
+                            @NotNull String title,
+                            @NotNull String description,
+                            boolean onlyPatrolExecutables) {
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        .withTitle(title)
+        .withDescription(description);
+    if (onlyPatrolExecutables) {
+      descriptor = descriptor.withFileFilter(this::isPatrolCli);
+    }
+    VirtualFile chosen = FileChooser.chooseFile(descriptor, project, currentFile(field.getText()));
+    if (chosen != null) {
+      field.setText(FileUtil.toSystemDependentName(chosen.getPath()));
+      updateCliPathHint();
+    }
+  }
+
+  private @Nullable VirtualFile currentFile(@Nullable String path) {
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      return null;
+    }
+    return LocalFileSystem.getInstance().findFileByPath(path.trim().replace('\\', '/'));
   }
 
   private boolean isPatrolCli(@NotNull VirtualFile file) {

@@ -21,20 +21,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only and does not affect which IDEs the plugin runs on.
 
 ### Fixed
+- **A run configuration created by hand ran the Patrol CLI from the wrong directory.** Only the
+  gutter and context-menu producers set a working directory, so a configuration made via
+  *Run > Edit Configurations* left it blank and the CLI inherited the IDE's working directory,
+  which is not the project root when the IDE is launched from Finder or the Dock. The working
+  directory now falls back to the project root. This surfaced as a confusing
+  `FormatException: Unexpected character` from deep inside `patrol_cli`, because version managers
+  such as fvm resolve the SDK from `.fvmrc` in the project root and, when they cannot, exit 0
+  having printed nothing, which the CLI then tried to parse as JSON.
 - Replaced the deprecated `ProcessAdapter` with the `ProcessListener` interface in diagnostic logging.
 - The "Hot Reload" toolbar action now declares `getActionUpdateThread()`, which the platform requires
   from any action that overrides `update()`.
 
+- Cleared the plugin verifier warnings:
+  - Dropped `TextFieldWithBrowseButton.addBrowseFolderListener(String, String, Project, FileChooserDescriptor)`,
+    which is scheduled for removal. Its direct replacement does not exist before 2024.3, so rather
+    than raise `since-build` the browse buttons now open the chooser explicitly via
+    `FileChooser.chooseFile`, with the title and description on the `FileChooserDescriptor`.
+    Every API involved exists in both 242 and 262.
+  - Migrated both run configuration producers from the deprecated
+    `RunConfigurationProducer(ConfigurationType)` to `LazyRunConfigurationProducer`. Each producer
+    now returns the factory matching its own command mode, so a context-created Develop
+    configuration is backed by the Develop factory instead of the Test one.
+
 ### Known deprecations (intentionally retained)
-- `TextFieldWithBrowseButton.addBrowseFolderListener(String, String, Project, FileChooserDescriptor)`
-  is deprecated and marked for removal on 2026.2, but its replacement
-  `addBrowseFolderListener(Project, FileChooserDescriptor)` does not exist before 2024.3.
-  Verified against 2024.2.6: switching to the replacement raises `NoSuchMethodError`.
-  The deprecated overload is kept so that one build runs across the whole 242-262 range;
-  migrate it when `since-build` is raised to 243 or later.
-- `RunConfigurationProducer(ConfigurationType)` is deprecated in favour of
-  `LazyRunConfigurationProducer`. Left as-is; migrating changes which factory backs each
-  producer and was out of scope for this compatibility update.
+- `EnvironmentVariablesComponent()` is deprecated on 2026.2 in favour of the constructor taking a
+  `Project`, which does not exist on 2024.2. Keeping the no-arg constructor is what allows one
+  build to span 242-262; migrate it when `since-build` is raised past 242.
 
 ### Added
 - **Test target is now a dropdown.** The run configuration editor lists every
@@ -53,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Verified
 - IntelliJ Plugin Verifier 1.410 reports **Compatible** at both ends of the declared range:
-  `IC-242.26775.15` (2024.2.6) and `IU-262.10968.63` (2026.2.3).
+  `IC-242.26775.15` (2024.2.6) with no warnings at all, and `IU-262.10968.63` (2026.2.3) with a
+  single deprecation that cannot be resolved without dropping 2024.2 support.
 
 ## [0.1.1] - 2026-01-16
 
