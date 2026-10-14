@@ -75,7 +75,12 @@ and install that from disk.
 - Set **Command** to `Develop` to run and watch for file changes.
 
 ## Configuration Fields
-- **Test target**: Dart file or test target path
+Every field has a tooltip explaining what it does; hover the field in the run configuration editor.
+
+- **Test target**: dropdown of discovered `*patrol_test.dart` files, searched under the
+  `patrol.test_directory` from `pubspec.yaml`, then `integration_test/` and `test/`.
+  Paths are shown relative to the project root. The field is editable, so you can type or paste
+  any other path; a relative path is resolved against the project root.
 - **Command**: `Test` or `Develop`
 - **Patrol CLI args**: additional CLI arguments
 - **Working directory**: optional override

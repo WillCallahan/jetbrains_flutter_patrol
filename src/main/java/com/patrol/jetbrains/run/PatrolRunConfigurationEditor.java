@@ -1,6 +1,7 @@
 package com.patrol.jetbrains.run;
 
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +20,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.ListTableModel;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
+import com.patrol.jetbrains.discovery.PatrolTestUtil;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
 import com.patrol.jetbrains.settings.PatrolProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,7 @@ import java.awt.Font;
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -42,7 +45,31 @@ import java.util.List;
 import java.util.Map;
 
 public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRunConfiguration> {
-  private final JBTextField targetField = new JBTextField();
+  private static final String TARGET_TOOLTIP =
+      "<html>The Dart test entrypoint passed to <code>patrol --target</code>.<br><br>"
+          + "The dropdown lists every <code>*patrol_test.dart</code> file found under the Patrol test "
+          + "directory (from <code>pubspec.yaml</code>), <code>integration_test/</code> and <code>test/</code>.<br><br>"
+          + "You can also type a path yourself: relative paths are resolved against the project root.</html>";
+  private static final String COMMAND_TOOLTIP =
+      "<html><b>Test</b> &mdash; <code>patrol test</code>. Runs the target once and exits. Use this for CI "
+          + "and for a normal single run.<br><br>"
+          + "<b>Develop</b> &mdash; <code>patrol develop</code>. Keeps the app running and watches for "
+          + "changes so you can iterate on a test, with a Hot Reload button in the Run toolbar.</html>";
+  private static final String DEVICE_TOOLTIP =
+      "<html>Device id passed to <code>patrol --device</code>.<br><br>"
+          + "Leave empty to use the device selected in the IDE toolbar.</html>";
+  private static final String ARGS_TOOLTIP =
+      "<html>Extra arguments appended to the Patrol command, parsed like a shell command line.<br><br>"
+          + "Use this for flags that have no field above.</html>";
+  private static final String WORKING_DIR_TOOLTIP =
+      "<html>Directory the Patrol CLI runs in. Defaults to the project root.<br><br>"
+          + "Set this when the Flutter package is in a subdirectory of the project.</html>";
+  private static final String CLI_PATH_TOOLTIP =
+      "<html>Overrides which Patrol CLI executable is used for this run configuration only.<br><br>"
+          + "Resolution order: this field &rarr; project override &rarr; IDE default &rarr; "
+          + "<code>~/.pub-cache/bin</code> &rarr; <code>PATH</code>.</html>";
+
+  private final ComboBox<String> targetBox = new ComboBox<>();
   private final ExpandableTextField argsField = new ExpandableTextField();
   private final JBTextField deviceField = new JBTextField();
   private final JBTextField workingDirField = new JBTextField();
@@ -63,11 +90,13 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final ActionLink modifyOptionsLink =
       new ActionLink("Modify options...", (java.awt.event.ActionListener) event -> showOptionsPopup());
   private com.intellij.openapi.project.Project project;
+  private boolean targetsLoaded;
 
   @Override
   protected void resetEditorFrom(@NotNull PatrolRunConfiguration configuration) {
     project = configuration.getProject();
-    targetField.setText(configuration.getTarget());
+    populateTargets();
+    setTargetText(toDisplayPath(configuration.getTarget()));
     argsField.setText(configuration.getCliArgs());
     String deviceValue = configuration.getDevice();
     if (StringUtil.isEmptyOrSpaces(deviceValue)) {
@@ -86,7 +115,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
 
   @Override
   protected void applyEditorTo(@NotNull PatrolRunConfiguration configuration) {
-    configuration.setTarget(targetField.getText());
+    configuration.setTarget(toStoredPath(getTargetText()));
     configuration.setCliArgs(argsField.getText());
     configuration.setDevice(deviceField.getText());
     configuration.setWorkingDir(workingDirField.getText());
@@ -126,12 +155,26 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     deviceField.getEmptyText().setText("Defaults to the IDE-selected device");
     commandModeBox.addActionListener(event -> updateOptionRowsVisibility());
 
+    // Editable so a target that discovery missed can still be typed or pasted in.
+    targetBox.setEditable(true);
+    targetBox.setToolTipText(TARGET_TOOLTIP);
+    // The combo's editor is a separate component, so it needs the tooltip too.
+    if (targetBox.getEditor().getEditorComponent() instanceof JComponent editorComponent) {
+      editorComponent.setToolTipText(TARGET_TOOLTIP);
+    }
+    commandModeBox.setToolTipText(COMMAND_TOOLTIP);
+    deviceField.setToolTipText(DEVICE_TOOLTIP);
+    argsField.setToolTipText(ARGS_TOOLTIP);
+    workingDirField.setToolTipText(WORKING_DIR_TOOLTIP);
+    cliPathField.setToolTipText(CLI_PATH_TOOLTIP);
+    cliPathTextField.setToolTipText(CLI_PATH_TOOLTIP);
+
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
     optionsPanel.setBorder(JBUI.Borders.emptyTop(4));
     buildOptionsPanel();
 
     JPanel panel = FormBuilder.createFormBuilder()
-        .addLabeledComponent("Test target", targetField)
+        .addLabeledComponent("Test target", targetBox)
         .addLabeledComponent("Command", commandModeBox)
         .addLabeledComponent("Device override", deviceField)
         .addComponent(createWideFieldPanel("Patrol CLI args", argsField))
@@ -143,6 +186,92 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         .addComponent(diagnosticCheckBox)
         .getPanel();
     return panel;
+  }
+
+  /**
+   * Fills the dropdown with discovered Patrol test entrypoints. The scan touches the filesystem,
+   * so it runs once per editor instance rather than on every {@code resetEditorFrom}.
+   */
+  private void populateTargets() {
+    if (targetsLoaded || project == null) {
+      return;
+    }
+    targetsLoaded = true;
+    String current = getTargetText();
+    for (String target : PatrolTestUtil.findTestTargets(project)) {
+      targetBox.addItem(target);
+    }
+    setTargetText(current);
+  }
+
+  private @NotNull String getTargetText() {
+    Object item = targetBox.getEditor().getItem();
+    return item == null ? "" : item.toString().trim();
+  }
+
+  private void setTargetText(@NotNull String value) {
+    targetBox.setSelectedItem(value);
+    targetBox.getEditor().setItem(value);
+  }
+
+  /**
+   * Renders a stored target for display. Targets inside the project are shown relative to the
+   * project root so they line up with the dropdown entries; anything else is shown verbatim.
+   */
+  private @NotNull String toDisplayPath(@Nullable String stored) {
+    if (StringUtil.isEmptyOrSpaces(stored)) {
+      return "";
+    }
+    String trimmed = stored.trim();
+    Path base = projectBase();
+    if (base == null) {
+      return trimmed;
+    }
+    try {
+      Path target = Path.of(trimmed);
+      if (target.isAbsolute() && target.startsWith(base)) {
+        return base.relativize(target).toString().replace('\\', '/');
+      }
+    } catch (java.nio.file.InvalidPathException ignored) {
+      // Not a usable path; leave the text exactly as the user typed it.
+    }
+    return trimmed;
+  }
+
+  /**
+   * Converts what is shown in the editor back to the absolute path the run configuration stores,
+   * which is the form the producers and the CLI invocation already use.
+   */
+  private @NotNull String toStoredPath(@NotNull String display) {
+    if (StringUtil.isEmptyOrSpaces(display)) {
+      return "";
+    }
+    String trimmed = display.trim();
+    Path base = projectBase();
+    if (base == null) {
+      return trimmed;
+    }
+    try {
+      Path target = Path.of(trimmed);
+      if (!target.isAbsolute()) {
+        return base.resolve(target).normalize().toString();
+      }
+    } catch (java.nio.file.InvalidPathException ignored) {
+      // Not a usable path; leave the text exactly as the user typed it.
+    }
+    return trimmed;
+  }
+
+  private @Nullable Path projectBase() {
+    String basePath = project == null ? null : project.getBasePath();
+    if (StringUtil.isEmptyOrSpaces(basePath)) {
+      return null;
+    }
+    try {
+      return Path.of(basePath);
+    } catch (java.nio.file.InvalidPathException e) {
+      return null;
+    }
   }
 
   private boolean isPatrolCli(@NotNull VirtualFile file) {

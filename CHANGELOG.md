@@ -37,6 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   producer and was out of scope for this compatibility update.
 
 ### Added
+- **Test target is now a dropdown.** The run configuration editor lists every
+  `*patrol_test.dart` file it finds under the Patrol test directory (from `pubspec.yaml`),
+  `integration_test/` and `test/`, so the target no longer has to be typed by hand.
+  The field stays editable for targets discovery misses, and paths are shown relative to the
+  project root while still being stored as absolute paths, so existing run configurations and
+  the gutter-icon matching are unaffected. The scan skips `build/`, `.dart_tool/`, platform
+  folders and dot-directories, and is bounded in depth and result count.
+- **Tooltips on every run configuration field**, including an explanation of when to use
+  `Test` (single run, CI) versus `Develop` (watch mode with hot reload).
 - `.github/workflows/release.yml` — tag-triggered GitHub Actions build that publishes an
   installable plugin ZIP and JAR to a GitHub release, and can also be run manually
   via `workflow_dispatch`.
