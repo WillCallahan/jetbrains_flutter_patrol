@@ -84,9 +84,9 @@ Every field has a tooltip explaining what it does; hover the field in the run co
   any other path; a relative path is resolved against the project root.
 - **Command**: `Test` for a single run, `Develop` for watch mode with hot reload
 - **Patrol CLI args**: additional CLI arguments, for flags with no dedicated field
-- **Dart define** (under *Modify options...*): paste a whole define list in any common shape
-  (`--dart-define A=1 --dart-define B=2`, `A=1;B=2`, or one `KEY=VALUE` per line). Expand for
-  one-per-line editing, or use the browse button for a table
+- **Dart define flags** (under *Modify options...*): enter repeated CLI flags, for example
+  `--dart-define ENV=dev --dart-define API_URL=https://example.com`. Existing configurations
+  saved as key/value lists appear in this form when opened.
 - **Working directory**: defaults to the project root. Set it when the Flutter package lives in a
   subdirectory, since version managers such as fvm resolve the SDK from this directory
 - **Patrol CLI path**: optional override for CLI resolution
@@ -97,7 +97,13 @@ There is no device field. Patrol runs on whatever is chosen in the IDE's Flutter
 the dropdown to the left of the run configuration, and the run reports an error if nothing is
 selected.
 
+For iOS simulator runs on macOS, the plugin warns when a local service occupies a configured
+Patrol server port. Set **Test server port** and **App server port** under *Modify options...* to
+an available pair. After an Xcode test launch failure, the plugin also reads Patrol's `.xcresult`
+report and explains missing `RunnerUITests` products or a CoreSimulator launch failure.
+
 ## Notes
+
 - The plugin depends on the Flutter plugin (`io.flutter`). Make sure it is available in the target IDE.
 - The Patrol CLI must be on `PATH` or set explicitly in the run configuration.
 

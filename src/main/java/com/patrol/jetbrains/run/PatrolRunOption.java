@@ -21,7 +21,7 @@ public enum PatrolRunOption {
   FLAVOR("flavor", "Flavor", "--flavor", PatrolRunOptionType.VALUE, false, null,
       "Flutter flavor to run.",
       EnumSet.allOf(PatrolCommandMode.class)),
-  DART_DEFINE("dartDefine", "Dart define (KEY=VALUE)", "--dart-define", PatrolRunOptionType.VALUE, false, null,
+  DART_DEFINE("dartDefine", "Dart define flags", "--dart-define", PatrolRunOptionType.VALUE, false, null,
       "Define a compile-time environment variable (repeatable).",
       EnumSet.allOf(PatrolCommandMode.class)),
   DART_DEFINE_FILE("dartDefineFile", "Dart define from file", "--dart-define-from-file", PatrolRunOptionType.VALUE, false, null,

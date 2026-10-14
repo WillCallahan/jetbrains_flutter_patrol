@@ -98,7 +98,12 @@ public final class PatrolCommandLineState extends CommandLineState {
       commandLine.withParentEnvironmentType(com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType.NONE);
     }
 
+    List<String> parameters = commandLine.getParametersList().getParameters();
+    PatrolRunDiagnostics.warnAboutMissingRunnerUiTests(getEnvironment().getProject(), device,
+        commandLine.getWorkDirectory(), parameters);
+    PatrolRunDiagnostics.warnAboutOccupiedSimulatorPort(getEnvironment().getProject(), device, parameters);
     KillableProcessHandler handler = new KillableProcessHandler(commandLine);
+    handler.addProcessListener(new PatrolRunDiagnostics(getEnvironment().getProject()));
     if (configuration.isDiagnosticMode()) {
       attachDiagnosticLogging(handler, commandLine);
     }

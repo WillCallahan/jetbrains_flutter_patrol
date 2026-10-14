@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Dart define options now use repeated `--dart-define KEY=VALUE` flags directly in the run
+  configuration editor. Previously saved key/value lists are displayed as flags when opened.
+
 ## [0.2.1] - 2026-10-14
 
 ### Changed

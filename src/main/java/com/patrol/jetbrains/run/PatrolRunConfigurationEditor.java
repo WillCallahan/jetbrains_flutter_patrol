@@ -2,7 +2,6 @@ package com.patrol.jetbrains.run;
 
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,16 +15,10 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.fields.ExpandableTextField;
-import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.ListTableModel;
 import com.patrol.jetbrains.DefaultPatrolCliLocator;
 import com.patrol.jetbrains.discovery.PatrolTestUtil;
 import com.patrol.jetbrains.settings.PatrolAppSettingsState;
@@ -38,7 +31,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.ListSelectionModel;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.BorderLayout;
@@ -47,7 +39,6 @@ import java.awt.event.MouseMotionAdapter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,12 +54,9 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
           + "<b>Develop</b> &mdash; <code>patrol develop</code>. Keeps the app running and watches for "
           + "changes so you can iterate on a test, with a Hot Reload button in the Run toolbar.</html>";
   private static final String DART_DEFINES_TOOLTIP =
-      "<html>Values passed as <code>--dart-define KEY=VALUE</code>, one per entry.<br><br>"
-          + "Paste a whole list in any of these shapes and it is normalised for you:<br>"
-          + "<code>--dart-define A=1 --dart-define B=2</code><br>"
-          + "<code>A=1;B=2</code><br>"
-          + "one <code>KEY=VALUE</code> per line<br><br>"
-          + "Use the expand control to edit one per line, or the browse button for a table.</html>";
+      "<html>Enter repeated CLI flags, for example "
+          + "<code>--dart-define ENV=dev --dart-define API_URL=https://example.com</code>.<br><br>"
+          + "Existing key/value lists are converted to this form when opened.</html>";
   private static final String ARGS_TOOLTIP =
       "<html>Extra arguments appended to the Patrol command, parsed like a shell command line.<br><br>"
           + "Use this for flags that have no field above.</html>";
@@ -95,7 +83,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final Map<PatrolRunOption, JComponent> optionRows = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBCheckBox> optionToggleFields = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBTextField> optionValueFields = new EnumMap<>(PatrolRunOption.class);
-  private DartDefinesField dartDefinesField;
+  private JBTextField dartDefinesField;
   private final JPanel optionsPanel = new JPanel();
   private final JSeparator optionsTopSeparator = new JSeparator();
   private final JSeparator optionsBottomSeparator = new JSeparator();
@@ -394,7 +382,9 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       return checkBox;
     }
     if (option == PatrolRunOption.DART_DEFINE) {
-      dartDefinesField = new DartDefinesField();
+      dartDefinesField = new JBTextField();
+      dartDefinesField.setToolTipText(DART_DEFINES_TOOLTIP);
+      dartDefinesField.getEmptyText().setText("--dart-define KEY=VALUE --dart-define KEY2=VALUE2");
       return createFieldPanel(option.getLabel(), dartDefinesField);
     }
     JBTextField field = new JBTextField();
@@ -425,7 +415,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         }
       } else if (option == PatrolRunOption.DART_DEFINE) {
         if (dartDefinesField != null) {
-          dartDefinesField.setText(DartDefines.normalize(configuration.getOptionValue(option)));
+          dartDefinesField.setText(DartDefines.toFlagSyntax(configuration.getOptionValue(option)));
         }
       } else {
         JBTextField field = optionValueFields.get(option);
@@ -446,7 +436,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         configuration.setOptionValue(option, checkBox != null && checkBox.isSelected() ? "true" : "false");
       } else if (option == PatrolRunOption.DART_DEFINE) {
         configuration.setOptionValue(option,
-            dartDefinesField == null ? "" : DartDefines.normalize(dartDefinesField.getText()));
+            dartDefinesField == null ? "" : dartDefinesField.getText().trim());
       } else {
         JBTextField field = optionValueFields.get(option);
         configuration.setOptionValue(option, field == null ? "" : field.getText().trim());
@@ -650,157 +640,4 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
 
 
 
-  /**
-   * Editor for {@code --dart-define} values, shaped like the platform's environment variables
-   * field: an inline {@code KEY=VALUE;KEY=VALUE} text field that accepts a pasted define list in
-   * any common shape, with the same in-field button the environment variables field uses to open a
-   * table for structured editing, plus an expand control for one-per-line editing.
-   */
-  private final class DartDefinesField extends ExpandableTextField {
-    private DartDefinesField() {
-      super(DartDefines::split, values -> String.join(";", values));
-      setToolTipText(DART_DEFINES_TOOLTIP);
-      // Same icon pair the platform's EnvironmentVariablesTextFieldWithBrowseButton uses.
-      // NOTE: the create() overload taking a trailing boolean only exists from 2025 onwards;
-      // this four-argument one is present across the whole supported range.
-      addExtension(ExtendableTextComponent.Extension.create(
-          AllIcons.General.OpenDisk,
-          AllIcons.General.OpenDiskHover,
-          "Edit Dart defines in a table",
-          this::editInTable));
-      // Tidy a pasted list as soon as focus leaves, so it is obvious the paste was understood.
-      addFocusListener(new java.awt.event.FocusAdapter() {
-        @Override
-        public void focusLost(java.awt.event.FocusEvent event) {
-          String normalized = DartDefines.normalize(getText());
-          if (!normalized.equals(getText())) {
-            setText(normalized);
-          }
-        }
-      });
-    }
-
-    private void editInTable() {
-      KeyValueTablePanel table = new KeyValueTablePanel();
-      table.setPairs(DartDefines.parse(getText()));
-      table.setPreferredSize(new Dimension(JBUI.scale(620), JBUI.scale(320)));
-
-      DialogWrapper dialog = new DialogWrapper(project, true) {
-        {
-          setTitle("Dart Defines");
-          init();
-        }
-
-        @Override
-        protected JComponent createCenterPanel() {
-          return table;
-        }
-
-        @Override
-        protected String getDimensionServiceKey() {
-          return "patrol.dartDefines.dialog";
-        }
-      };
-
-      if (dialog.showAndGet()) {
-        setText(DartDefines.format(table.getPairs()));
-      }
-    }
-  }
-
-  private static final class KeyValueTablePanel extends JPanel {
-    private final ListTableModel<KeyValueRow> model;
-    private final JBTable table;
-
-    private KeyValueTablePanel() {
-      ColumnInfo<KeyValueRow, String> keyColumn = new ColumnInfo<>("Key") {
-        @Override
-        public String valueOf(KeyValueRow row) {
-          return row.key;
-        }
-
-        @Override
-        public void setValue(KeyValueRow row, String value) {
-          row.key = value == null ? "" : value;
-        }
-
-        @Override
-        public boolean isCellEditable(KeyValueRow row) {
-          return true;
-        }
-      };
-      ColumnInfo<KeyValueRow, String> valueColumn = new ColumnInfo<>("Value") {
-        @Override
-        public String valueOf(KeyValueRow row) {
-          return row.value;
-        }
-
-        @Override
-        public void setValue(KeyValueRow row, String value) {
-          row.value = value == null ? "" : value;
-        }
-
-        @Override
-        public boolean isCellEditable(KeyValueRow row) {
-          return true;
-        }
-      };
-      model = new ListTableModel<>(keyColumn, valueColumn);
-      table = new JBTable(model);
-      table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-      ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table)
-          .disableUpDownActions()
-          .setAddAction(event -> addRow())
-          .setRemoveAction(event -> removeSelectedRow());
-
-      setLayout(new BorderLayout());
-      add(decorator.createPanel(), BorderLayout.CENTER);
-    }
-
-    private void addRow() {
-      model.addRow(new KeyValueRow("", ""));
-      int index = model.getRowCount() - 1;
-      if (index >= 0) {
-        table.setRowSelectionInterval(index, index);
-        table.editCellAt(index, 0);
-      }
-    }
-
-    private void removeSelectedRow() {
-      int index = table.getSelectedRow();
-      if (index >= 0) {
-        model.removeRow(index);
-      }
-    }
-
-    private void setPairs(@NotNull Map<String, String> pairs) {
-      List<KeyValueRow> rows = new ArrayList<>();
-      for (Map.Entry<String, String> entry : pairs.entrySet()) {
-        rows.add(new KeyValueRow(entry.getKey(), entry.getValue()));
-      }
-      model.setItems(rows);
-    }
-
-    private @NotNull Map<String, String> getPairs() {
-      Map<String, String> result = new LinkedHashMap<>();
-      for (KeyValueRow row : model.getItems()) {
-        if (row.key.isEmpty() && row.value.isEmpty()) {
-          continue;
-        }
-        result.put(row.key, row.value);
-      }
-      return result;
-    }
-  }
-
-  private static final class KeyValueRow {
-    private String key;
-    private String value;
-
-    private KeyValueRow(String key, String value) {
-      this.key = key;
-      this.value = value;
-    }
-  }
 }

@@ -6,9 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Parsing and formatting for the {@code --dart-define} run option.
@@ -24,29 +22,12 @@ import java.util.Map;
  *   API_BASE_URL=https://example.com
  * </pre>
  *
- * <p>The canonical stored form stays {@code KEY=VALUE;KEY=VALUE}, which is what earlier versions
- * wrote, so existing run configurations keep working.
+ * <p>Existing run configurations may contain {@code KEY=VALUE;KEY=VALUE}. The editor converts
+ * that legacy form to CLI flags, while {@link #split(String)} accepts both forms when launching.
  */
 public final class DartDefines {
   private static final String FLAG = "--dart-define";
-  /** Separators for the stored form. Comma is deliberately absent: values such as lists contain it. */
-  private static final String ENTRY_SEPARATORS = ";\n";
-
   private DartDefines() {
-  }
-
-  /** Parses any accepted shape into ordered KEY -> VALUE pairs. Later keys win. */
-  public static @NotNull Map<String, String> parse(@Nullable String raw) {
-    Map<String, String> defines = new LinkedHashMap<>();
-    for (String entry : split(raw)) {
-      int idx = entry.indexOf('=');
-      if (idx < 0) {
-        defines.put(entry, "");
-      } else {
-        defines.put(entry.substring(0, idx).trim(), entry.substring(idx + 1).trim());
-      }
-    }
-    return defines;
   }
 
   /** Splits into {@code KEY=VALUE} entries without interpreting them. */
@@ -82,27 +63,26 @@ public final class DartDefines {
     return entries;
   }
 
-  /** Formats pairs into the canonical stored form. */
-  public static @NotNull String format(@NotNull Map<String, String> defines) {
-    StringBuilder builder = new StringBuilder();
-    for (Map.Entry<String, String> entry : defines.entrySet()) {
-      if (StringUtil.isEmptyOrSpaces(entry.getKey())) {
-        continue;
-      }
-      if (builder.length() > 0) {
-        builder.append(';');
-      }
-      builder.append(entry.getKey().trim());
-      if (!StringUtil.isEmptyOrSpaces(entry.getValue())) {
-        builder.append('=').append(entry.getValue().trim());
-      }
+  /** Shows previously saved key/value lists as the CLI flags users can paste and edit directly. */
+  public static @NotNull String toFlagSyntax(@Nullable String raw) {
+    if (StringUtil.isEmptyOrSpaces(raw)) {
+      return "";
     }
-    return builder.toString();
+    if (raw.contains(FLAG)) {
+      return raw.trim();
+    }
+    List<String> flags = new ArrayList<>();
+    for (String entry : split(raw)) {
+      flags.add(FLAG + " " + quoteIfNeeded(entry));
+    }
+    return String.join(" ", flags);
   }
 
-  /** Normalizes arbitrary pasted text into the canonical stored form. */
-  public static @NotNull String normalize(@Nullable String raw) {
-    return format(parse(raw));
+  private static @NotNull String quoteIfNeeded(@NotNull String value) {
+    if (value.chars().noneMatch(c -> Character.isWhitespace(c) || c == '"' || c == '\\')) {
+      return value;
+    }
+    return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
   }
 
   private static void addEntry(@NotNull List<String> entries, @Nullable String candidate) {
