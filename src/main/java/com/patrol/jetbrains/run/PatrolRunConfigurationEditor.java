@@ -2,6 +2,7 @@ package com.patrol.jetbrains.run;
 
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,6 +60,13 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
           + "and for a normal single run.<br><br>"
           + "<b>Develop</b> &mdash; <code>patrol develop</code>. Keeps the app running and watches for "
           + "changes so you can iterate on a test, with a Hot Reload button in the Run toolbar.</html>";
+  private static final String DART_DEFINES_TOOLTIP =
+      "<html>Values passed as <code>--dart-define KEY=VALUE</code>, one per entry.<br><br>"
+          + "Paste a whole list in any of these shapes and it is normalised for you:<br>"
+          + "<code>--dart-define A=1 --dart-define B=2</code><br>"
+          + "<code>A=1;B=2</code><br>"
+          + "one <code>KEY=VALUE</code> per line<br><br>"
+          + "Use the expand control to edit one per line, or the browse button for a table.</html>";
   private static final String ARGS_TOOLTIP =
       "<html>Extra arguments appended to the Patrol command, parsed like a shell command line.<br><br>"
           + "Use this for flags that have no field above.</html>";
@@ -85,7 +93,7 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   private final Map<PatrolRunOption, JComponent> optionRows = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBCheckBox> optionToggleFields = new EnumMap<>(PatrolRunOption.class);
   private final Map<PatrolRunOption, JBTextField> optionValueFields = new EnumMap<>(PatrolRunOption.class);
-  private final Map<PatrolRunOption, KeyValueTablePanel> optionKeyValuePanels = new EnumMap<>(PatrolRunOption.class);
+  private DartDefinesField dartDefinesField;
   private final JPanel optionsPanel = new JPanel();
   private final JSeparator optionsTopSeparator = new JSeparator();
   private final JSeparator optionsBottomSeparator = new JSeparator();
@@ -364,7 +372,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     optionRows.clear();
     optionToggleFields.clear();
     optionValueFields.clear();
-    optionKeyValuePanels.clear();
 
     optionsTopSeparator.setAlignmentX(0f);
     optionsBottomSeparator.setAlignmentX(0f);
@@ -385,9 +392,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       return checkBox;
     }
     if (option == PatrolRunOption.DART_DEFINE) {
-      KeyValueTablePanel panel = new KeyValueTablePanel();
-      optionKeyValuePanels.put(option, panel);
-      return createFieldPanel(option.getLabel(), panel);
+      dartDefinesField = new DartDefinesField();
+      return createFieldPanel(option.getLabel(), dartDefinesField);
     }
     JBTextField field = new JBTextField();
     optionValueFields.put(option, field);
@@ -416,9 +422,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
           checkBox.setSelected(value);
         }
       } else if (option == PatrolRunOption.DART_DEFINE) {
-        KeyValueTablePanel panel = optionKeyValuePanels.get(option);
-        if (panel != null) {
-          panel.setPairs(parseKeyValuePairs(configuration.getOptionValue(option)));
+        if (dartDefinesField != null) {
+          dartDefinesField.setText(DartDefines.normalize(configuration.getOptionValue(option)));
         }
       } else {
         JBTextField field = optionValueFields.get(option);
@@ -438,9 +443,8 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
         JBCheckBox checkBox = optionToggleFields.get(option);
         configuration.setOptionValue(option, checkBox != null && checkBox.isSelected() ? "true" : "false");
       } else if (option == PatrolRunOption.DART_DEFINE) {
-        KeyValueTablePanel panel = optionKeyValuePanels.get(option);
-        String value = panel == null ? "" : stringifyKeyValuePairs(panel.getPairs());
-        configuration.setOptionValue(option, value);
+        configuration.setOptionValue(option,
+            dartDefinesField == null ? "" : DartDefines.normalize(dartDefinesField.getText()));
       } else {
         JBTextField field = optionValueFields.get(option);
         configuration.setOptionValue(option, field == null ? "" : field.getText().trim());
@@ -642,39 +646,58 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     }
   }
 
-  private Map<String, String> parseKeyValuePairs(@NotNull String value) {
-    Map<String, String> result = new LinkedHashMap<>();
-    if (value.isEmpty()) {
-      return result;
-    }
-    String[] entries = value.split(";");
-    for (String entry : entries) {
-      String trimmed = entry.trim();
-      if (trimmed.isEmpty()) {
-        continue;
-      }
-      int idx = trimmed.indexOf('=');
-      if (idx < 0) {
-        result.put(trimmed, "");
-      } else {
-        result.put(trimmed.substring(0, idx).trim(), trimmed.substring(idx + 1).trim());
-      }
-    }
-    return result;
-  }
 
-  private String stringifyKeyValuePairs(@NotNull Map<String, String> pairs) {
-    StringBuilder builder = new StringBuilder();
-    for (Map.Entry<String, String> entry : pairs.entrySet()) {
-      if (builder.length() > 0) {
-        builder.append(';');
-      }
-      builder.append(entry.getKey());
-      if (!entry.getValue().isEmpty()) {
-        builder.append('=').append(entry.getValue());
+
+  /**
+   * Editor for {@code --dart-define} values, shaped like the platform's environment variables
+   * field: an inline {@code KEY=VALUE;KEY=VALUE} text field that accepts a pasted define list in
+   * any common shape, an expand control for one-per-line editing, and a browse button opening a
+   * table for structured editing.
+   */
+  private final class DartDefinesField extends TextFieldWithBrowseButton {
+    private DartDefinesField() {
+      super(new ExpandableTextField(DartDefines::split, values -> String.join(";", values)));
+      setToolTipText(DART_DEFINES_TOOLTIP);
+      getTextField().setToolTipText(DART_DEFINES_TOOLTIP);
+      addActionListener(event -> editInTable());
+      // Tidy a pasted list as soon as focus leaves, so it is obvious the paste was understood.
+      getTextField().addFocusListener(new java.awt.event.FocusAdapter() {
+        @Override
+        public void focusLost(java.awt.event.FocusEvent event) {
+          String normalized = DartDefines.normalize(getText());
+          if (!normalized.equals(getText())) {
+            setText(normalized);
+          }
+        }
+      });
+    }
+
+    private void editInTable() {
+      KeyValueTablePanel table = new KeyValueTablePanel();
+      table.setPairs(DartDefines.parse(getText()));
+      table.setPreferredSize(new Dimension(JBUI.scale(620), JBUI.scale(320)));
+
+      DialogWrapper dialog = new DialogWrapper(project, true) {
+        {
+          setTitle("Dart Defines");
+          init();
+        }
+
+        @Override
+        protected JComponent createCenterPanel() {
+          return table;
+        }
+
+        @Override
+        protected String getDimensionServiceKey() {
+          return "patrol.dartDefines.dialog";
+        }
+      };
+
+      if (dialog.showAndGet()) {
+        setText(DartDefines.format(table.getPairs()));
       }
     }
-    return builder.toString();
   }
 
   private static final class KeyValueTablePanel extends JPanel {

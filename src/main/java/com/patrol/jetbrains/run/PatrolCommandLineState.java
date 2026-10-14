@@ -325,7 +325,11 @@ public final class PatrolCommandLineState extends CommandLineState {
     if (option == PatrolRunOption.DART_DEFINE
         || option == PatrolRunOption.EXCLUDE
         || option == PatrolRunOption.COVERAGE_IGNORE) {
-      List<String> values = splitMultiValue(rawValue);
+      // Dart defines are split only on ';' and newline. They routinely carry commas inside a
+      // value (lists, tokens), which the generic comma-splitting below would tear apart.
+      List<String> values = option == PatrolRunOption.DART_DEFINE
+          ? DartDefines.split(rawValue)
+          : splitMultiValue(rawValue);
       for (String value : values) {
         commandLine.addParameter(option.getFlag());
         commandLine.addParameter(value);

@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `FormatException: Unexpected character` from deep inside `patrol_cli`, because version managers
   such as fvm resolve the SDK from `.fvmrc` in the project root and, when they cannot, exit 0
   having printed nothing, which the CLI then tried to parse as JSON.
+- **Dart define values containing a comma were silently torn into separate defines.** The launcher
+  split every multi-value option on `,`, `;` and newline, so `--dart-define LIST=a,b,c` became three
+  broken arguments. Dart defines now split only on `;` and newline; `--exclude` and
+  `--coverage-ignore`, which are genuinely comma-separated, are unchanged.
 - Replaced the deprecated `ProcessAdapter` with the `ProcessListener` interface in diagnostic logging.
 - The "Hot Reload" toolbar action now declares `getActionUpdateThread()`, which the platform requires
   from any action that overrides `update()`.
@@ -57,6 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   build to span 242-262; migrate it when `since-build` is raised past 242.
 
 ### Added
+- **Dart defines are now a paste-friendly field** shaped like the platform's environment variables
+  component: an inline `KEY=VALUE;KEY=VALUE` text field, an expand control for one-per-line
+  editing, and a browse button opening a table. A whole define list can be pasted in any of the
+  shapes people actually have on hand and is normalised automatically:
+  `--dart-define A=1 --dart-define B=2`, `--dart-define=A=1`, `A=1;B=2`, or one `KEY=VALUE`
+  per line. Quoted values keep their spaces. The stored format is unchanged, so existing run
+  configurations keep working.
 - **Test target is now a dropdown.** The run configuration editor lists every
   `*patrol_test.dart` file it finds under the Patrol test directory (from `pubspec.yaml`),
   `integration_test/` and `test/`, so the target no longer has to be typed by hand.

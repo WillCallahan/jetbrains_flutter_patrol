@@ -83,7 +83,10 @@ Every field has a tooltip explaining what it does; hover the field in the run co
   Paths are shown relative to the project root. The field is editable, so you can type or paste
   any other path; a relative path is resolved against the project root.
 - **Command**: `Test` for a single run, `Develop` for watch mode with hot reload
-- **Patrol CLI args**: additional CLI arguments
+- **Patrol CLI args**: additional CLI arguments, for flags with no dedicated field
+- **Dart define** (under *Modify options...*): paste a whole define list in any common shape
+  (`--dart-define A=1 --dart-define B=2`, `A=1;B=2`, or one `KEY=VALUE` per line). Expand for
+  one-per-line editing, or use the browse button for a table
 - **Working directory**: defaults to the project root. Set it when the Flutter package lives in a
   subdirectory, since version managers such as fvm resolve the SDK from this directory
 - **Patrol CLI path**: optional override for CLI resolution
