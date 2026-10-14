@@ -67,7 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shapes people actually have on hand and is normalised automatically:
   `--dart-define A=1 --dart-define B=2`, `--dart-define=A=1`, `A=1;B=2`, or one `KEY=VALUE`
   per line. Quoted values keep their spaces. The stored format is unchanged, so existing run
-  configurations keep working.
+  configurations keep working. The in-field button uses the same icon pair
+  (`AllIcons.General.OpenDisk`) as the platform's environment variables field, so the two rows
+  read as one control.
 - **Test target is now a dropdown.** The run configuration editor lists every
   `*patrol_test.dart` file it finds under the Patrol test directory (from `pubspec.yaml`),
   `integration_test/` and `test/`, so the target no longer has to be typed by hand.

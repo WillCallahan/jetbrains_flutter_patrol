@@ -16,7 +16,9 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
@@ -651,17 +653,23 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   /**
    * Editor for {@code --dart-define} values, shaped like the platform's environment variables
    * field: an inline {@code KEY=VALUE;KEY=VALUE} text field that accepts a pasted define list in
-   * any common shape, an expand control for one-per-line editing, and a browse button opening a
-   * table for structured editing.
+   * any common shape, with the same in-field button the environment variables field uses to open a
+   * table for structured editing, plus an expand control for one-per-line editing.
    */
-  private final class DartDefinesField extends TextFieldWithBrowseButton {
+  private final class DartDefinesField extends ExpandableTextField {
     private DartDefinesField() {
-      super(new ExpandableTextField(DartDefines::split, values -> String.join(";", values)));
+      super(DartDefines::split, values -> String.join(";", values));
       setToolTipText(DART_DEFINES_TOOLTIP);
-      getTextField().setToolTipText(DART_DEFINES_TOOLTIP);
-      addActionListener(event -> editInTable());
+      // Same icon pair the platform's EnvironmentVariablesTextFieldWithBrowseButton uses.
+      // NOTE: the create() overload taking a trailing boolean only exists from 2025 onwards;
+      // this four-argument one is present across the whole supported range.
+      addExtension(ExtendableTextComponent.Extension.create(
+          AllIcons.General.OpenDisk,
+          AllIcons.General.OpenDiskHover,
+          "Edit Dart defines in a table",
+          this::editInTable));
       // Tidy a pasted list as soon as focus leaves, so it is obvious the paste was understood.
-      getTextField().addFocusListener(new java.awt.event.FocusAdapter() {
+      addFocusListener(new java.awt.event.FocusAdapter() {
         @Override
         public void focusLost(java.awt.event.FocusEvent event) {
           String normalized = DartDefines.normalize(getText());
