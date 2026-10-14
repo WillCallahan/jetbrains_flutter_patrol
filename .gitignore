@@ -13,3 +13,10 @@ system/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Release staging (produced by .github/workflows/release.yml and `gh run download`)
+dist/
+dist-download/
+patrol-flutter-*.jar
+patrol-flutter-*.zip
+release-notes.md
