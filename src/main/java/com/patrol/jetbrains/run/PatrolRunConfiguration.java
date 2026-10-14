@@ -20,7 +20,6 @@ public final class PatrolRunConfiguration extends RunConfigurationBase<PatrolRun
   private static final String FIELD_CLI_PATH = "patrol.cliPath";
   private static final String FIELD_DIAGNOSTIC = "patrol.diagnostic";
   private static final String FIELD_COMMAND_MODE = "patrol.commandMode";
-  private static final String FIELD_DEVICE = "patrol.device";
   private static final String FIELD_OPTION_ENABLED_PREFIX = "patrol.option.enabled.";
   private static final String FIELD_OPTION_VALUE_PREFIX = "patrol.option.value.";
 
@@ -28,7 +27,6 @@ public final class PatrolRunConfiguration extends RunConfigurationBase<PatrolRun
   private String cliArgs = "";
   private String workingDir = "";
   private String cliPath = "";
-  private String device = "";
   private boolean diagnosticMode = false;
   private PatrolCommandMode commandMode = PatrolCommandMode.TEST;
   private EnvironmentVariablesData envData = EnvironmentVariablesData.DEFAULT;
@@ -69,7 +67,6 @@ public final class PatrolRunConfiguration extends RunConfigurationBase<PatrolRun
     cliArgs = JDOMExternalizerUtil.readField(element, FIELD_ARGS, "");
     workingDir = JDOMExternalizerUtil.readField(element, FIELD_WORKING_DIR, "");
     cliPath = JDOMExternalizerUtil.readField(element, FIELD_CLI_PATH, "");
-    device = JDOMExternalizerUtil.readField(element, FIELD_DEVICE, "");
     diagnosticMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, FIELD_DIAGNOSTIC, "false"));
     String commandValue = JDOMExternalizerUtil.readField(element, FIELD_COMMAND_MODE, PatrolCommandMode.TEST.name());
     commandMode = PatrolCommandMode.valueOf(commandValue);
@@ -84,7 +81,6 @@ public final class PatrolRunConfiguration extends RunConfigurationBase<PatrolRun
     JDOMExternalizerUtil.writeField(element, FIELD_ARGS, cliArgs);
     JDOMExternalizerUtil.writeField(element, FIELD_WORKING_DIR, workingDir);
     JDOMExternalizerUtil.writeField(element, FIELD_CLI_PATH, cliPath);
-    JDOMExternalizerUtil.writeField(element, FIELD_DEVICE, device);
     JDOMExternalizerUtil.writeField(element, FIELD_DIAGNOSTIC, Boolean.toString(diagnosticMode));
     JDOMExternalizerUtil.writeField(element, FIELD_COMMAND_MODE, commandMode.name());
     envData.writeExternal(element);
@@ -121,14 +117,6 @@ public final class PatrolRunConfiguration extends RunConfigurationBase<PatrolRun
 
   public void setCliPath(String cliPath) {
     this.cliPath = cliPath == null ? "" : cliPath;
-  }
-
-  public String getDevice() {
-    return device;
-  }
-
-  public void setDevice(String device) {
-    this.device = device == null ? "" : device;
   }
 
   public EnvironmentVariablesData getEnvData() {

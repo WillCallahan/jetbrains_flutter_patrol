@@ -5,7 +5,8 @@ Run and debug Patrol Flutter tests directly from JetBrains IDEs, with a fast fee
 ## Highlights
 - Run Patrol tests from the gutter or Run tool window
 - Two modes: `test` for single runs and `develop` for watch/reload workflows
-- Device-aware run configuration with CLI arguments, env vars, and working directory
+- Runs on the device picked in the IDE's Flutter device selector, with no duplicate setting to keep in sync
+- Run configuration for CLI arguments, env vars, and working directory
 - Rich output in the Run tool window with structured diagnostics
 
 ## Requirements
@@ -81,12 +82,17 @@ Every field has a tooltip explaining what it does; hover the field in the run co
   `patrol.test_directory` from `pubspec.yaml`, then `integration_test/` and `test/`.
   Paths are shown relative to the project root. The field is editable, so you can type or paste
   any other path; a relative path is resolved against the project root.
-- **Command**: `Test` or `Develop`
+- **Command**: `Test` for a single run, `Develop` for watch mode with hot reload
 - **Patrol CLI args**: additional CLI arguments
-- **Working directory**: optional override
+- **Working directory**: defaults to the project root. Set it when the Flutter package lives in a
+  subdirectory, since version managers such as fvm resolve the SDK from this directory
 - **Patrol CLI path**: optional override for CLI resolution
 - **Environment**: custom environment variables
 - **Diagnostic logging**: verbose logs without env var output
+
+There is no device field. Patrol runs on whatever is chosen in the IDE's Flutter device selector,
+the dropdown to the left of the run configuration, and the run reports an error if nothing is
+selected.
 
 ## Notes
 - The plugin depends on the Flutter plugin (`io.flutter`). Make sure it is available in the target IDE.

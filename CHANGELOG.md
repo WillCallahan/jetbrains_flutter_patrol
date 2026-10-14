@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-10-13
+## [0.2.1] - 2026-10-14
 
 ### Changed
+- **Removed the Device override field. The device now always comes from the IDE's Flutter device
+  selector**, the dropdown to the left of the run configuration. The Flutter plugin does not
+  contribute platform execution targets for devices, so the previous code fell back to the
+  execution target's display name, which is a label such as `macOS (desktop)` rather than the id
+  Patrol expects (`macos`). The selected device is now read from the Flutter plugin's
+  `DeviceService`, which returns the real device id. If no device is selected, the run reports that
+  instead of failing obscurely later.
 - Build against IntelliJ Platform **2026.2.3** (build `262.10968.63`), up from 2023.1.7.
 - Raised the minimum supported IDE to **2024.2** (`since-build=242`), up from 2023.1 (`231`).
   This is the first build that ships a Java 21 runtime, which the plugin now requires.
@@ -69,10 +76,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `IC-242.26775.15` (2024.2.6) with no warnings at all, and `IU-262.10968.63` (2026.2.3) with a
   single deprecation that cannot be resolved without dropping 2024.2 support.
 
+## [0.2.0] - not released
+
+Tagged, but the release build failed before publishing any artifact and no release was created.
+Everything intended for 0.2.0 ships in 0.2.1.
+
 ## [0.1.1] - 2026-01-16
 
 Versions up to and including 0.1.1 predate this changelog; see the git history for details.
 
-[Unreleased]: https://github.com/WillCallahan/jetbrains_flutter_patrol/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/WillCallahan/jetbrains_flutter_patrol/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/WillCallahan/jetbrains_flutter_patrol/releases/tag/v0.2.1
 [0.2.0]: https://github.com/WillCallahan/jetbrains_flutter_patrol/releases/tag/v0.2.0
 [0.1.1]: https://github.com/WillCallahan/jetbrains_flutter_patrol/releases/tag/v0.1.1

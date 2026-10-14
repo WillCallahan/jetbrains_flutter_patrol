@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 public final class PatrolAppSettingsState implements PersistentStateComponent<PatrolAppSettingsState> {
   public String defaultCliPath = "";
   public String defaultTestRoot = "patrol_test";
-  public String lastDeviceId = "";
 
   public static PatrolAppSettingsState getInstance() {
     return ApplicationManager.getApplication().getService(PatrolAppSettingsState.class);
@@ -30,6 +29,5 @@ public final class PatrolAppSettingsState implements PersistentStateComponent<Pa
     this.defaultTestRoot = state.defaultTestRoot == null || state.defaultTestRoot.isEmpty()
         ? "patrol_test"
         : state.defaultTestRoot;
-    this.lastDeviceId = state.lastDeviceId == null ? "" : state.lastDeviceId;
   }
 }

@@ -10,11 +10,11 @@ Legend: [x] done, [ ] pending, [~] partial
 - [~] Gutter icons for patrolTest(), groups, files
 - [x] Context menu includes Patrol Debug config
 - [x] Command mode: develop (watch) and test (single run)
-- [x] Device selection from IDE device selector passed to Patrol CLI
+- [x] Device selection from IDE device selector passed to Patrol CLI (via Flutter DeviceService)
 - [x] Modify options for Patrol CLI flags
 - [x] Mutually exclusive build mode flags enforced
 - [x] Options show tooltips
-- [x] Device override field in run configuration (defaults to last selected)
+- [x] Device comes solely from the IDE selector (override field removed)
 - [x] CLI args field supports expandable multi-line input
 - [ ] Hot reload integration (auto + manual)
 - [ ] Reload status feedback (console, status bar)

@@ -59,9 +59,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
           + "and for a normal single run.<br><br>"
           + "<b>Develop</b> &mdash; <code>patrol develop</code>. Keeps the app running and watches for "
           + "changes so you can iterate on a test, with a Hot Reload button in the Run toolbar.</html>";
-  private static final String DEVICE_TOOLTIP =
-      "<html>Device id passed to <code>patrol --device</code>.<br><br>"
-          + "Leave empty to use the device selected in the IDE toolbar.</html>";
   private static final String ARGS_TOOLTIP =
       "<html>Extra arguments appended to the Patrol command, parsed like a shell command line.<br><br>"
           + "Use this for flags that have no field above.</html>";
@@ -77,7 +74,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
 
   private final ComboBox<String> targetBox = new ComboBox<>();
   private final ExpandableTextField argsField = new ExpandableTextField();
-  private final JBTextField deviceField = new JBTextField();
   private final JBTextField workingDirField = new JBTextField();
   private final JBTextField cliPathTextField = new JBTextField();
   private final TextFieldWithBrowseButton cliPathField = new TextFieldWithBrowseButton(cliPathTextField);
@@ -105,11 +101,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     populateTargets();
     setTargetText(toDisplayPath(configuration.getTarget()));
     argsField.setText(configuration.getCliArgs());
-    String deviceValue = configuration.getDevice();
-    if (StringUtil.isEmptyOrSpaces(deviceValue)) {
-      deviceValue = PatrolAppSettingsState.getInstance().lastDeviceId;
-    }
-    deviceField.setText(StringUtil.notNullize(deviceValue));
     workingDirField.setText(configuration.getWorkingDir());
     cliPathField.setText(configuration.getCliPath());
     commandModeBox.setSelectedItem(configuration.getCommandMode());
@@ -124,7 +115,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
   protected void applyEditorTo(@NotNull PatrolRunConfiguration configuration) {
     configuration.setTarget(toStoredPath(getTargetText()));
     configuration.setCliArgs(argsField.getText());
-    configuration.setDevice(deviceField.getText());
     configuration.setWorkingDir(workingDirField.getText());
     configuration.setCliPath(cliPathField.getText());
     configuration.setCommandMode((PatrolCommandMode) commandModeBox.getSelectedItem());
@@ -153,7 +143,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     cliPathTextField.getEmptyText().setText("Auto-detecting Patrol CLI...");
     cliPathField.addActionListener(event -> browseForCli(
         cliPathField, "Select Patrol CLI", "Choose the Patrol CLI executable.", true));
-    deviceField.getEmptyText().setText("Defaults to the IDE-selected device");
     commandModeBox.addActionListener(event -> updateOptionRowsVisibility());
 
     // Editable so a target that discovery missed can still be typed or pasted in.
@@ -164,7 +153,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
       editorComponent.setToolTipText(TARGET_TOOLTIP);
     }
     commandModeBox.setToolTipText(COMMAND_TOOLTIP);
-    deviceField.setToolTipText(DEVICE_TOOLTIP);
     argsField.setToolTipText(ARGS_TOOLTIP);
     workingDirField.setToolTipText(WORKING_DIR_TOOLTIP);
     cliPathField.setToolTipText(CLI_PATH_TOOLTIP);
@@ -177,7 +165,6 @@ public final class PatrolRunConfigurationEditor extends SettingsEditor<PatrolRun
     JPanel panel = FormBuilder.createFormBuilder()
         .addLabeledComponent("Test target", targetBox)
         .addLabeledComponent("Command", commandModeBox)
-        .addLabeledComponent("Device override", deviceField)
         .addComponent(createWideFieldPanel("Patrol CLI args", argsField))
         .addLabeledComponent("Working directory", workingDirField)
         .addLabeledComponent("Patrol CLI path", cliPathField)

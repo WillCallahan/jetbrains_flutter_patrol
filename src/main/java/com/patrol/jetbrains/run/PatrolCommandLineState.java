@@ -62,7 +62,12 @@ public final class PatrolCommandLineState extends CommandLineState {
     if (!StringUtil.isEmptyOrSpaces(device)) {
       commandLine.addParameter("--device");
       commandLine.addParameter(device);
-      PatrolAppSettingsState.getInstance().lastDeviceId = device;
+      if (configuration.isDiagnosticMode()) {
+        LOG.info("Patrol device: " + device);
+      }
+    } else {
+      PatrolNotifications.warn(getEnvironment().getProject(),
+          "No device is selected. Pick one in the device selector next to the run configuration.");
     }
     commandLine.addParameter("--target");
     commandLine.addParameter(configuration.getTarget());
@@ -166,10 +171,18 @@ public final class PatrolCommandLineState extends CommandLineState {
     });
   }
 
+  /**
+   * Resolves the device to run on from the IDE's Flutter device selector.
+   *
+   * <p>The selector is the authoritative source, so it is consulted first. The execution target
+   * below is only a fallback for the case where the Flutter plugin cannot be reached; it yields a
+   * display name such as "macOS (desktop)" rather than the id Patrol expects, which is why it is
+   * run through the Flutter daemon to map the name back to an id.
+   */
   private String resolveDeviceTarget() {
-    String configured = configuration.getDevice();
-    if (!StringUtil.isEmptyOrSpaces(configured)) {
-      return configured.trim();
+    String selected = FlutterDeviceSelection.selectedDeviceId(getEnvironment().getProject());
+    if (!StringUtil.isEmptyOrSpaces(selected)) {
+      return selected;
     }
     com.intellij.execution.ExecutionTarget target = getEnvironment().getExecutionTarget();
     if (target != null) {
